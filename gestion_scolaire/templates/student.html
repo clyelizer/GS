@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Interface Étudiant{% endblock %}
+
+{% block extra_css %}
+<style>
+.grade-card {
+    border-left: 4px solid #1a73e8;
+    margin-bottom: 15px;
+}
+.average-display {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #1a73e8;
+}
+.period-selector {
+    min-width: 150px;
+}
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+.grade-badge {
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-user-graduate me-2"></i>Mes Notes</h2>
+    <a href="{{ url_for('generate_report') }}" class="btn btn-primary">
+        <i class="fas fa-file-pdf me-1"></i>Générer Bulletin
+    </a>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Nombre de notes</h5>
+                <div class="average-display">{{ grades|length }}</div>
+                <p class="card-text text-muted">Total des notes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Moyenne générale</h5>
+                {% if grades %}
+                    {% set total_avg = (grades|map(attribute='moy_cl')|sum + 2 * grades|map(attribute='n_compo')|sum) / (3 * grades|length) %}
+                    <div class="average-display">{{ "%.2f"|format(total_avg) }}/20</div>
+                    <p class="card-text text-muted">Moyenne globale</p>
+                {% else %}
+                    <div class="average-display text-muted">N/A</div>
+                    <p class="card-text text-muted">Aucune note</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Périodes</h5>
+                <div class="average-display">{{ grades|map(attribute='period')|unique|list|length }}</div>
+                <p class="card-text text-muted">Périodes avec notes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Period Filter -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-filter me-2"></i>Filtrer par période</h5>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-end">
+            <div class="col-md-6">
+                <label for="period_filter" class="form-label">Sélectionner une période</label>
+                <select class="form-select period-selector" id="period_filter" onchange="filterByPeriod()">
+                    <option value="">Toutes les périodes</option>
+                    {% set periods = grades|map(attribute='period')|unique|list %}
+                    {% for period in periods %}
+                        <option value="{{ period }}">{{ period }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <button class="btn btn-outline-secondary" onclick="clearFilter()">
+                    <i class="fas fa-times me-1"></i>Effacer le filtre
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grades Display -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-list-alt me-2"></i>Détail des notes</h5>
+    </div>
+    <div class="card-body">
+        {% if grades %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="gradesTable">
+                <thead>
+                    <tr>
+                        <th>Matière</th>
+                        <th>Moy. Cl.</th>
+                        <th>N. Compo</th>
+                        <th>Coef.</th>
+                        <th>Moyenne</th>
+                        <th>Appréciation</th>
+                        <th>Période</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    {% set subject_avg = (grade.moy_cl + 2 * grade.n_compo) / 3 %}
+                    <tr data-period="{{ grade.period }}">
+                        <td><strong>{{ grade.subject }}</strong></td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if grade.moy_cl >= 10 else 'warning' if grade.moy_cl >= 8 else 'danger' }} grade-badge">
+                                {{ "%.2f"|format(grade.moy_cl) }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if grade.n_compo >= 10 else 'warning' if grade.n_compo >= 8 else 'danger' }} grade-badge">
+                                {{ "%.2f"|format(grade.n_compo) }}
+                            </span>
+                        </td>
+                        <td>{{ grade.coef }}</td>
+                        <td>
+                            <strong class="text-{{ 'success' if subject_avg >= 10 else 'warning' if subject_avg >= 8 else 'danger' }}">
+                                {{ "%.2f"|format(subject_avg) }}/20
+                            </strong>
+                        </td>
+                        <td>
+                            {% if grade.appreciation %}
+                                <span class="badge bg-{{ 'success' if 'Bien' in grade.appreciation else 'warning' if 'Passable' in grade.appreciation else 'danger' }}">
+                                    {{ grade.appreciation }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ grade.period }}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ grade.date.strftime('%d/%m/%Y') if grade.date else 'N/A' }}
+                            </small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Summary by Period -->
+        {% set periods = grades|groupby('period') %}
+        <hr>
+        <h6 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Résumé par période</h6>
+        <div class="row">
+            {% for period, period_grades in periods %}
+            <div class="col-md-6">
+                <div class="card grade-card">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ period }}</h6>
+                        {% set period_avg = (period_grades|map(attribute='moy_cl')|sum + 2 * period_grades|map(attribute='n_compo')|sum) / (3 * period_grades|length) %}
+                        <p class="mb-1"><strong>Moyenne:</strong> {{ "%.2f"|format(period_avg) }}/20</p>
+                        <p class="mb-1"><strong>Nombre de notes:</strong> {{ period_grades|length }}</p>
+                        <p class="mb-0"><strong>Matières:</strong> {{ period_grades|map(attribute='subject')|unique|list|join(', ') }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucune note disponible</h5>
+            <p class="text-muted">Vos notes apparaîtront ici une fois saisies par vos enseignants.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script type="text/javascript">
+function filterByPeriod() {
+    var periodFilter = document.getElementById('period_filter').value;
+    var tableRows = document.querySelectorAll('#gradesTable tbody tr');
+    
+    tableRows.forEach(function(row) {
+        if (periodFilter === '' || row.getAttribute('data-period') === periodFilter) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function clearFilter() {
+    document.getElementById('period_filter').value = '';
+    filterByPeriod();
+}
+
+// Initialize filter on page load
+document.addEventListener('DOMContentLoaded', function() {
+    filterByPeriod();
+});
+</script>
+{% endblock %}

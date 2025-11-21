@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Interface Enseignant{% endblock %}
+
+{% block extra_css %}
+<style>
+.grade-form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+.subject-select {
+    min-width: 200px;
+}
+.grade-input {
+    width: 80px;
+    text-align: center;
+}
+.table-responsive {
+    border-radius: 10px;
+    overflow: hidden;
+}
+.btn-group-sm > .btn, .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.775rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chalkboard-teacher me-2"></i>Interface Enseignant</h2>
+</div>
+
+<!-- Class Selection -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-users me-2"></i>Sélection de classe</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('teacher_interface') }}" class="row align-items-end">
+            <div class="col-md-6">
+                <label for="class_name" class="form-label">Classe avec structure définie</label>
+                <select class="form-select" id="class_name" name="class_name">
+                    <option value="">Toutes les classes</option>
+                    {% for class_name in defined_classes %}
+                        <option value="{{ class_name }}" {% if selected_class_name == class_name %}selected{% endif %}>
+                            {{ class_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i>Filtrer
+                </button>
+                {% if selected_class_name %}
+                    <a href="{{ url_for('teacher_interface') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Effacer
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if students %}
+<!-- Grade Entry Form -->
+<div class="grade-form">
+    <h5><i class="fas fa-plus-circle me-2"></i>Ajouter une note</h5>
+    <form method="POST" action="{{ url_for('add_grade') }}">
+        <input type="hidden" name="selected_class_for_grade" value="{{ selected_class_name or '' }}">
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="student_id" class="form-label">Étudiant</label>
+                <select class="form-select" id="student_id" name="student_id" required>
+                    <option value="">Sélectionner un étudiant</option>
+                    {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="subject" class="form-label">Matière</label>
+                <select class="form-select subject-select" id="subject" name="subject" required>
+                    <option value="">Sélectionner une matière</option>
+                    {% for subject in subjects_for_selected_class %}
+                        <option value="{{ subject }}">{{ subject }}</option>
+                    {% endfor %}
+                    <option value="Other">Autre...</option>
+                </select>
+                <input type="text" class="form-control mt-2" id="other_subject_name" name="other_subject_name" 
+                       placeholder="Nom de la matière" style="display: none;">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="moy_cl" class="form-label">Moy. Cl.</label>
+                <input type="number" class="form-control grade-input" id="moy_cl" name="moy_cl" 
+                       min="0" max="20" step="0.25" placeholder="0" required>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="n_compo" class="form-label">N. Compo</label>
+                <input type="number" class="form-control grade-input" id="n_compo" name="n_compo" 
+                       min="0" max="20" step="0.25" placeholder="0" required>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="coef" class="form-label">Coef.</label>
+                <input type="number" class="form-control grade-input" id="coef" name="coef" 
+                       min="1" max="10" value="1" required>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="period" class="form-label">Période</label>
+                <select class="form-select" id="period" name="period" required>
+                    <option value="">Sélectionner une période</option>
+                    {% for period in standard_periods %}
+                        <option value="{{ period }}">{{ period }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-1"></i>Ajouter la note
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Students Table -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-list me-2"></i>Liste des étudiants{% if selected_class_name %} - {{ selected_class_name }}{% endif %}</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Classe</th>
+                        <th>Nombre de notes</th>
+                        <th>Dernière note</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td><strong>{{ student.username }}</strong></td>
+                        <td>{{ student.current_class.name if student.current_class else 'Non assigné' }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ student.grades|length }}</span>
+                        </td>
+                        <td>
+                            {% if student.grades %}
+                                {{ student.grades[0].date.strftime('%d/%m/%Y') if student.grades[0].date else 'N/A' }}
+                            {% else %}
+                                <span class="text-muted">Aucune note</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" data-student-id="{{ student.id }}" data-student-name="{{ student.username }}" onclick="viewGrades(this.dataset.studentId, this.dataset.studentName)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Grades Modal -->
+<div class="modal fade" id="gradesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notes de <span id="modalStudentName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="studentGrades"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i>
+    {% if defined_classes %}
+        Sélectionnez une classe pour voir les étudiants et commencer à saisir des notes.
+    {% else %}
+        Aucune classe avec structure définie trouvée. 
+        <a href="{{ url_for('manage_bulletin_structures') }}" class="alert-link">Créer une structure de bulletin</a> 
+        pour commencer.
+    {% endif %}
+</div>
+{% endif %}
+
+<script type="text/javascript">
+// Initialize grades data - this will be replaced by Jinja2
+var gradesData = {{ grades|tojson|safe }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Subject selection handling
+    var subjectSelect = document.getElementById('subject');
+    if (subjectSelect) {
+        subjectSelect.addEventListener('change', function() {
+            var otherField = document.getElementById('other_subject_name');
+            if (this.value === 'Other') {
+                otherField.style.display = 'block';
+                otherField.required = true;
+            } else {
+                otherField.style.display = 'none';
+                otherField.required = false;
+                otherField.value = '';
+            }
+        });
+    }
+});
+
+function viewGrades(studentId, studentName) {
+    document.getElementById('modalStudentName').textContent = studentName;
+    
+    var studentGrades = gradesData.filter(function(g) {
+        return parseInt(g.student_id) === parseInt(studentId);
+    });
+    
+    var html = '<div class="table-responsive"><table class="table table-sm">';
+    html += '<thead><tr><th>Matière</th><th>Moy. Cl.</th><th>N. Compo</th><th>Coef.</th><th>Appréciation</th><th>Période</th><th>Date</th></tr></thead><tbody>';
+    
+    if (studentGrades.length === 0) {
+        html += '<tr><td colspan="7" class="text-center text-muted">Aucune note trouvée</td></tr>';
+    } else {
+        for (var i = 0; i < studentGrades.length; i++) {
+            var grade = studentGrades[i];
+            var dateStr = grade.date ? new Date(grade.date).toLocaleDateString() : 'N/A';
+            var appreciation = grade.appreciation || 'N/A';
+            html += '<tr>' +
+                '<td>' + grade.subject + '</td>' +
+                '<td>' + grade.moy_cl + '</td>' +
+                '<td>' + grade.n_compo + '</td>' +
+                '<td>' + grade.coef + '</td>' +
+                '<td>' + appreciation + '</td>' +
+                '<td>' + grade.period + '</td>' +
+                '<td>' + dateStr + '</td>' +
+                '</tr>';
+        }
+    }
+    
+    html += '</tbody></table></div>';
+    document.getElementById('studentGrades').innerHTML = html;
+    
+    var modal = new bootstrap.Modal(document.getElementById('gradesModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

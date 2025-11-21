@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Structures de Bulletin{% endblock %}
+
+{% block extra_css %}
+<style>
+.structure-card {
+    border-left: 4px solid #28a745;
+    margin-bottom: 20px;
+}
+.subject-list {
+    font-size: 0.9rem;
+}
+.subject-item {
+    background-color: #e9ecef;
+    padding: 5px 10px;
+    border-radius: 15px;
+    margin: 2px;
+    display: inline-block;
+}
+.edit-form {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+.btn-toggle {
+    min-width: 80px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-cogs me-2"></i>Gestion des Structures de Bulletin</h2>
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addStructureModal">
+        <i class="fas fa-plus me-1"></i>Nouvelle Structure
+    </button>
+</div>
+
+<!-- Add Structure Modal -->
+<div class="modal fade" id="addStructureModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nouvelle Structure de Bulletin</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_bulletin_structure') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="school_class_id" class="form-label">Classe</label>
+                        <select class="form-select" id="school_class_id" name="school_class_id" required>
+                            <option value="">Sélectionner une classe</option>
+                            {% for class in school_classes %}
+                                <option value="{{ class.id }}">{{ class.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subjects_part1" class="form-label">Matières Principales (Partie 1)</label>
+                        <textarea class="form-control" id="subjects_part1" name="subjects_part1" rows="3" 
+                                  placeholder="MATHS,PHYSIQUE,CHIMIE,GÉOLOGIE/BIO,PHILOSOPHIE,ANGLAIS" required></textarea>
+                        <div class="form-text">Séparer les matières par des virgules</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subjects_part2" class="form-label">Matières Secondaires (Partie 2)</label>
+                        <textarea class="form-control" id="subjects_part2" name="subjects_part2" rows="3" 
+                                  placeholder="E.C.M,EPS,INFORMAT.,DESSIN TECH.,CONDUITE" required></textarea>
+                        <div class="form-text">Séparer les matières par des virgules</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Créer la Structure</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Structures List -->
+{% if structures %}
+<div class="row">
+    {% for structure in structures %}
+    <div class="col-md-6">
+        <div class="card structure-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    {{ structure.school_class.name if structure.school_class else 'Classe Inconnue' }}
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleEditForm({{ structure.id }})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form method="POST" action="{{ url_for('delete_bulletin_structure', structure_id=structure.id) }}" 
+                          style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette structure ?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-list me-1"></i>Matières Principales</h6>
+                        <div class="subject-list">
+                            {% for subject in structure.subjects_part1.split(',') %}
+                                {% if subject.strip() %}
+                                <span class="subject-item">{{ subject.strip() }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-list me-1"></i>Matières Secondaires</h6>
+                        <div class="subject-list">
+                            {% for subject in structure.subjects_part2.split(',') %}
+                                {% if subject.strip() %}
+                                <span class="subject-item">{{ subject.strip() }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Edit Form -->
+                <div class="edit-form" id="editForm{{ structure.id }}">
+                    <h6><i class="fas fa-edit me-2"></i>Modifier la Structure</h6>
+                    <form method="POST" action="{{ url_for('edit_bulletin_structure', structure_id=structure.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">Classe</label>
+                            <select class="form-select" name="school_class_id" required>
+                                {% for class in school_classes %}
+                                    <option value="{{ class.id }}" {% if class.id == structure.school_class_id %}selected{% endif %}>
+                                        {{ class.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Matières Principales</label>
+                            <textarea class="form-control" name="subjects_part1" rows="2" required>{{ structure.subjects_part1 }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Matières Secondaires</label>
+                            <textarea class="form-control" name="subjects_part2" rows="2" required>{{ structure.subjects_part2 }}</textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-save me-1"></i>Sauvegarder
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEditForm({{ structure.id }})">
+                                <i class="fas fa-times me-1"></i>Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Quick Actions -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5><i class="fas fa-tools me-2"></i>Actions Rapides</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <a href="{{ url_for('manage_school_classes') }}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-users me-2"></i>Gérer les Classes
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ url_for('teacher_interface') }}" class="btn btn-outline-success w-100">
+                    <i class="fas fa-tachometer-alt me-2"></i>Interface Enseignant
+                </a>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-outline-info w-100" onclick="exportStructures()">
+                    <i class="fas fa-download me-2"></i>Exporter Structures
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">Aucune structure de bulletin trouvée</h5>
+    <p class="text-muted">Créez votre première structure de bulletin pour commencer.</p>
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addStructureModal">
+        <i class="fas fa-plus me-2"></i>Créer une Structure
+    </button>
+</div>
+{% endif %}
+
+<script type="text/javascript">
+function toggleEditForm(structureId) {
+    var editForm = document.getElementById('editForm' + structureId);
+    if (editForm.style.display === 'none' || editForm.style.display === '') {
+        editForm.style.display = 'block';
+    } else {
+        editForm.style.display = 'none';
+    }
+}
+
+function exportStructures() {
+    // Simple export functionality - can be enhanced
+    var structures = {{ structures|tojson }};
+    var dataStr = JSON.stringify(structures, null, 2);
+    var dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    var exportFileDefaultName = 'bulletin_structures.json';
+    
+    var linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+</script>
+{% endblock %}
