@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime
 import tempfile
-from pdf_generator import generate_bulletin_pdf
+from gestion_scolaire.pdf_generator import generate_bulletin_pdf
 import logging
 
 app = Flask(__name__)
