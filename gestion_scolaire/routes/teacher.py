@@ -7,7 +7,7 @@ from functools import wraps
 from gestion_scolaire import db
 from gestion_scolaire.models import (
     User, SchoolClass, Subject, Grade, BulletinStructure,
-    Attendance, AuditLog, STANDARD_PERIODS
+    Attendance, Announcement, AuditLog, STANDARD_PERIODS
 )
 from gestion_scolaire.pdf_generator import generate_bulletin_pdf
 from datetime import datetime, date
@@ -38,24 +38,24 @@ def teacher_required(f):
 def dashboard():
     """Tableau de bord enseignant"""
     # Classes avec structure de bulletin
-    classes_with_structure = SchoolClass.query.join(BulletinStructure).order_by(SchoolClass.name).all()
+    classes = SchoolClass.query.order_by(SchoolClass.name).all()
     
     # Statistiques
-    stats = {
-        'total_students': User.query.filter_by(role='student').count(),
-        'total_classes': SchoolClass.query.count(),
-        'grades_this_month': Grade.query.filter(
-            Grade.teacher_id == current_user.id,
-            Grade.created_at >= datetime.now().replace(day=1)
-        ).count() if current_user.role == 'teacher' else Grade.query.filter(
-            Grade.created_at >= datetime.now().replace(day=1)
-        ).count(),
-        'recent_grades': Grade.query.order_by(Grade.created_at.desc()).limit(10).all()
-    }
+    total_students = User.query.filter_by(role='student').count()
+    total_grades = Grade.query.count()
+    subjects = Subject.query.filter_by(is_active=True).all()
+    
+    # Annonces
+    announcements = Announcement.query.filter_by(is_active=True).order_by(
+        Announcement.created_at.desc()
+    ).limit(5).all()
     
     return render_template('teacher/dashboard.html', 
-                          classes=classes_with_structure,
-                          stats=stats,
+                          classes=classes,
+                          total_students=total_students,
+                          total_grades=total_grades,
+                          subjects=subjects,
+                          announcements=announcements,
                           periods=STANDARD_PERIODS)
 
 
