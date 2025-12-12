@@ -3,12 +3,9 @@ Gestion Scolaire - Module de gestion de base de données
 """
 
 import os
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash
-
-# Instance globale de la base de données
-db = SQLAlchemy()
+from gestion_scolaire import db  # Importer l'instance unique de db
 
 def init_db(app=None):
     """Initialise la base de données avec les tables et données par défaut"""
