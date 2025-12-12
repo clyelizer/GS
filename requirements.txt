@@ -15,6 +15,9 @@ Flask-Login==0.6.3
 # Génération PDF
 reportlab==4.0.6
 
+# Pour Colab (tunnel cloudflare)
+flask-cloudflared==0.0.5
+
 # Pour la production (optionnel)
 gunicorn==21.2.0
 psycopg2-binary==2.9.9  # PostgreSQL
