@@ -64,7 +64,7 @@
     </div>
     <div class="card-body">
         {% if students %}
-        <form method="POST" action="{{ url_for('teacher.save_attendance') }}">
+        <form method="POST" action="{{ url_for('teacher.attendance') }}">
             <input type="hidden" name="class_id" value="{{ selected_class.id }}">
             <input type="hidden" name="date" value="{{ selected_date.strftime('%Y-%m-%d') }}">
             
