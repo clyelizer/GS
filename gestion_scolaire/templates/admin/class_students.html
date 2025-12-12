@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Élèves de {{ school_class.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-users me-2"></i>Élèves de {{ school_class.name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Administration</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.classes') }}">Classes</a></li>
+            <li class="breadcrumb-item active">{{ school_class.name }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card primary">
+            <div class="stat-value">{{ students|length }}</div>
+            <div class="stat-label">Élèves inscrits</div>
+            <i class="fas fa-user-graduate stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card success">
+            <div class="stat-value">{{ school_class.capacity }}</div>
+            <div class="stat-label">Capacité max</div>
+            <i class="fas fa-chair stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-list me-2"></i>Liste des élèves</span>
+        <a href="{{ url_for('admin.add_user') }}" class="btn btn-sm btn-primary">
+            <i class="fas fa-user-plus me-2"></i>Ajouter un élève
+        </a>
+    </div>
+    <div class="card-body">
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nom complet</th>
+                        <th>Identifiant</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                    {{ student.first_name[0] if student.first_name else student.username[0] | upper }}
+                                </div>
+                                {{ student.full_name }}
+                            </div>
+                        </td>
+                        <td>{{ student.username }}</td>
+                        <td>{{ student.email or '-' }}</td>
+                        <td>{{ student.phone or '-' }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('admin.edit_user', user_id=student.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+            <p class="text-muted">Aucun élève dans cette classe</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

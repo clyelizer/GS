@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Absences de {{ child.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-calendar-check me-2"></i>Absences de {{ child.full_name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('parent.dashboard') }}">Espace Parent</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('parent.children') }}">Mes enfants</a></li>
+            <li class="breadcrumb-item active">Absences</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Carte enfant -->
+<div class="card mb-4 border-primary">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <i class="fas fa-user-graduate fa-lg"></i>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <h5 class="mb-1">{{ child.full_name }}</h5>
+                <p class="mb-0 text-muted">
+                    <i class="fas fa-chalkboard me-1"></i>{{ child.school_class.name if child.school_class else 'Non assigné' }}
+                    <span class="mx-2">|</span>
+                    <i class="fas fa-id-card me-1"></i>{{ child.matricule or '-' }}
+                </p>
+            </div>
+            <div class="col-md-3 text-end">
+                <div class="h3 mb-0 {{ 'text-success' if stats.presence_rate >= 80 else 'text-warning' }}">
+                    {{ stats.presence_rate }}%
+                </div>
+                <small class="text-muted">Taux de présence</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <i class="fas fa-check fa-2x mb-2"></i>
+                <h3>{{ stats.present }}</h3>
+                <p class="mb-0">Présences</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <i class="fas fa-times fa-2x mb-2"></i>
+                <h3>{{ stats.absent }}</h3>
+                <p class="mb-0">Absences</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3>{{ stats.late }}</h3>
+                <p class="mb-0">Retards</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <i class="fas fa-file-medical fa-2x mb-2"></i>
+                <h3>{{ stats.excused }}</h3>
+                <p class="mb-0">Excusés</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historique -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-history me-2"></i>Historique des présences
+    </div>
+    <div class="card-body">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-center">Statut</th>
+                        <th>Remarque</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td><strong>{{ record.date.strftime('%A %d %B %Y') }}</strong></td>
+                        <td class="text-center">
+                            {% if record.status == 'present' %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Présent</span>
+                            {% elif record.status == 'absent' %}
+                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Absent</span>
+                            {% elif record.status == 'late' %}
+                            <span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Retard</span>
+                            {% elif record.status == 'excused' %}
+                            <span class="badge bg-info"><i class="fas fa-file-medical me-1"></i>Excusé</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ record.remark if record.remark else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-check fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucun enregistrement</h5>
+            <p class="text-muted">L'historique de présence sera affiché ici.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Note importante -->
+{% if stats.absent > 3 %}
+<div class="alert alert-warning mt-4">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+        <div>
+            <h5 class="mb-1">Attention</h5>
+            <p class="mb-0">Votre enfant a cumulé {{ stats.absent }} absences. 
+            En cas d'absence justifiée, merci de transmettre un justificatif à l'administration.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Navigation -->
+<div class="d-flex justify-content-between mt-4">
+    <a href="{{ url_for('parent.children') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Retour à mes enfants
+    </a>
+    <div>
+        <a href="{{ url_for('parent.child_grades', child_id=child.id) }}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-star me-2"></i>Notes
+        </a>
+        <a href="{{ url_for('parent.messages') }}" class="btn btn-primary">
+            <i class="fas fa-envelope me-2"></i>Contacter un enseignant
+        </a>
+    </div>
+</div>
+{% endblock %}

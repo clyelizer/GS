@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Mes notes{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-star me-2"></i>Mes notes</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('student.dashboard') }}">Mon espace</a></li>
+            <li class="breadcrumb-item active">Mes notes</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Filtres -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row align-items-end">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <label class="form-label">Période</label>
+                <select class="form-select" name="period" onchange="this.form.submit()">
+                    <option value="">Toutes les périodes</option>
+                    <option value="1" {{ 'selected' if selected_period == 1 }}>1ère période</option>
+                    <option value="2" {{ 'selected' if selected_period == 2 }}>2ème période</option>
+                    <option value="3" {{ 'selected' if selected_period == 3 }}>3ème période</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center h-100">
+                    {% if current_user.school_class %}
+                    <span class="badge bg-primary fs-6">
+                        <i class="fas fa-chalkboard me-1"></i>{{ current_user.school_class.name }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if overall_average %}
+                <span class="h4 {{ 'text-success' if overall_average >= 10 else 'text-danger' }}">
+                    Moyenne: {{ '%.2f'|format(overall_average) }}/20
+                </span>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Résumé -->
+{% if selected_period %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Moyenne période {{ selected_period }}</h6>
+                        <h2>{{ '%.2f'|format(period_average) if period_average else '-' }}/20</h2>
+                    </div>
+                    <i class="fas fa-calculator fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Rang</h6>
+                        <h2>{{ rank if rank else '-' }} / {{ class_size if class_size else '-' }}</h2>
+                    </div>
+                    <i class="fas fa-trophy fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6>Matières notées</h6>
+                        <h2>{{ grades|length }}</h2>
+                    </div>
+                    <i class="fas fa-book fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tableau des notes -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-table me-2"></i>
+        {% if selected_period %}
+        Notes de la période {{ selected_period }}
+        {% else %}
+        Toutes mes notes
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if grades %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Matière</th>
+                        {% if not selected_period %}
+                        <th class="text-center">Période</th>
+                        {% endif %}
+                        <th class="text-center">Moy. Classe</th>
+                        <th class="text-center">Note Compo</th>
+                        <th class="text-center">Coefficient</th>
+                        <th class="text-center">Moyenne</th>
+                        <th>Appréciation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td><strong>{{ grade.subject.name }}</strong></td>
+                        {% if not selected_period %}
+                        <td class="text-center">
+                            <span class="badge bg-secondary">P{{ grade.period }}</span>
+                        </td>
+                        {% endif %}
+                        <td class="text-center">{{ '%.2f'|format(grade.moy_cl) if grade.moy_cl else '-' }}</td>
+                        <td class="text-center">{{ '%.2f'|format(grade.n_compo) if grade.n_compo else '-' }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ grade.coef }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge {{ 'bg-success' if grade.average >= 10 else 'bg-danger' }} fs-6">
+                                {{ '%.2f'|format(grade.average) }}/20
+                            </span>
+                        </td>
+                        <td>
+                            {% if grade.appreciation %}
+                            <small>{{ grade.appreciation }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="{{ 5 if selected_period else 6 }}" class="text-end">Moyenne générale:</th>
+                        <th class="text-center">
+                            <span class="badge {{ 'bg-success' if overall_average >= 10 else 'bg-danger' }} fs-5">
+                                {{ '%.2f'|format(overall_average) if overall_average else '-' }}/20
+                            </span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-star fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucune note disponible</h5>
+            <p class="text-muted">Les notes seront affichées ici dès qu'elles seront saisies par vos enseignants.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Évolution -->
+{% if grades_evolution %}
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-chart-line me-2"></i>Évolution par période
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Matière</th>
+                        <th class="text-center">Période 1</th>
+                        <th class="text-center">Période 2</th>
+                        <th class="text-center">Période 3</th>
+                        <th class="text-center">Tendance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject, data in grades_evolution.items() %}
+                    <tr>
+                        <td><strong>{{ subject }}</strong></td>
+                        {% for p in [1, 2, 3] %}
+                        <td class="text-center">
+                            {% if data.get(p) %}
+                            <span class="badge {{ 'bg-success' if data[p] >= 10 else 'bg-danger' }}">
+                                {{ '%.2f'|format(data[p]) }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="text-center">
+                            {% set values = [data.get(1), data.get(2), data.get(3)] | select('number') | list %}
+                            {% if values|length >= 2 %}
+                                {% if values[-1] > values[0] %}
+                                <i class="fas fa-arrow-up text-success"></i>
+                                {% elif values[-1] < values[0] %}
+                                <i class="fas fa-arrow-down text-danger"></i>
+                                {% else %}
+                                <i class="fas fa-minus text-warning"></i>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Légende -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-info-circle me-2"></i>Comprendre mes notes
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Calcul de la moyenne</h6>
+                <p class="text-muted">
+                    La moyenne est calculée selon la formule:<br>
+                    <strong>(Moyenne de classe + 2 × Note de composition) / 3</strong>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h6>Appréciation</h6>
+                <ul class="list-unstyled text-muted">
+                    <li><span class="badge bg-success">≥ 16</span> Excellent</li>
+                    <li><span class="badge bg-success">≥ 14</span> Très bien</li>
+                    <li><span class="badge bg-success">≥ 12</span> Bien</li>
+                    <li><span class="badge bg-warning">≥ 10</span> Assez bien</li>
+                    <li><span class="badge bg-danger">< 10</span> Insuffisant</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

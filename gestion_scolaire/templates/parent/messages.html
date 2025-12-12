@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-envelope me-2"></i>Messages</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('parent.dashboard') }}">Espace Parent</a></li>
+            <li class="breadcrumb-item active">Messages</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <!-- Liste des conversations -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-inbox me-2"></i>Conversations</span>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if conversations %}
+                    {% for conv in conversations %}
+                    <a href="{{ url_for('parent.messages', conv_id=conv.id) }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if selected_conv and selected_conv.id == conv.id }}">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ conv.other_user.full_name }}</strong>
+                            {% if conv.unread > 0 %}
+                            <span class="badge bg-danger">{{ conv.unread }}</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">{{ conv.last_message[:30] }}{% if conv.last_message|length > 30 %}...{% endif %}</small>
+                        <br>
+                        <small class="text-muted">{{ conv.last_date.strftime('%d/%m %H:%M') if conv.last_date else '' }}</small>
+                    </a>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Aucune conversation</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zone de messages -->
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            {% if selected_conv %}
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-user me-2"></i>{{ selected_conv.other_user.full_name }}
+                <span class="badge bg-light text-primary ms-2">{{ selected_conv.other_user.role }}</span>
+            </div>
+            <div class="card-body" style="height: 400px; overflow-y: auto;" id="messagesContainer">
+                {% for message in messages %}
+                <div class="mb-3 {{ 'text-end' if message.sender_id == current_user.id else '' }}">
+                    <div class="d-inline-block p-3 rounded {{ 'bg-primary text-white' if message.sender_id == current_user.id else 'bg-light' }}" style="max-width: 75%;">
+                        <p class="mb-1">{{ message.content }}</p>
+                        <small class="{{ 'text-white-50' if message.sender_id == current_user.id else 'text-muted' }}">
+                            {{ message.sent_at.strftime('%d/%m %H:%M') }}
+                        </small>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-comments fa-3x text-muted mb-2"></i>
+                    <p class="text-muted">Commencez la conversation</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="card-footer">
+                <form method="POST" action="{{ url_for('parent.send_message', conv_id=selected_conv.id) }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="content" placeholder="Votre message..." required>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% else %}
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="text-center">
+                    <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Sélectionnez une conversation</h5>
+                    <p class="text-muted">ou créez-en une nouvelle</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                        <i class="fas fa-plus me-2"></i>Nouveau message
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal nouveau message -->
+<div class="modal fade" id="newMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nouveau message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('parent.new_message') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Destinataire <span class="text-danger">*</span></label>
+                        <select class="form-select" name="recipient_id" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for teacher in teachers %}
+                            <option value="{{ teacher.id }}">{{ teacher.full_name }} (Enseignant)</option>
+                            {% endfor %}
+                            {% for admin in admins %}
+                            <option value="{{ admin.id }}">{{ admin.full_name }} (Administration)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="content" rows="4" required placeholder="Votre message..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Envoyer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Scroll automatique vers le bas des messages
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('messagesContainer');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+});
+</script>
+{% endblock %}

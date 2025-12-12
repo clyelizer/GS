@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Espace Parent{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="fas fa-users me-2"></i>Espace Parent</h1>
+        <p class="text-muted mb-0">Bienvenue, {{ current_user.full_name }}</p>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-primary fs-6">
+            <i class="fas fa-child me-1"></i>{{ children|length }} enfant(s)
+        </span>
+    </div>
+</div>
+
+<!-- Résumé des enfants -->
+<div class="row mb-4">
+    {% for child in children %}
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-user-graduate me-2"></i>{{ child.full_name }}</span>
+                <span class="badge bg-light text-primary">{{ child.school_class.name if child.school_class else 'Non assigné' }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="{{ 'text-success' if child.average >= 10 else 'text-danger' }}">
+                                {{ '%.2f'|format(child.average) if child.average else '-' }}/20
+                            </h4>
+                            <small class="text-muted">Moyenne</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h4 class="text-primary">{{ child.rank if child.rank else '-' }}/{{ child.class_size if child.class_size else '-' }}</h4>
+                            <small class="text-muted">Rang</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('parent.child_grades', child_id=child.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-star me-2"></i>Voir les notes
+                    </a>
+                    <a href="{{ url_for('parent.child_bulletin', child_id=child.id) }}" class="btn btn-outline-success">
+                        <i class="fas fa-file-pdf me-2"></i>Voir le bulletin
+                    </a>
+                    <a href="{{ url_for('parent.child_attendance', child_id=child.id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-calendar-check me-2"></i>Voir les absences
+                    </a>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <small>
+                    <i class="fas fa-id-card me-1"></i>Matricule: {{ child.matricule or 'Non assigné' }}
+                </small>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-child fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun enfant associé</h5>
+                <p class="text-muted">Veuillez contacter l'administration pour associer vos enfants à votre compte.</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row">
+    <!-- Actions rapides -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-bolt me-2"></i>Actions rapides
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('parent.children') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users me-3 text-primary"></i>Voir tous mes enfants
+                    </a>
+                    <a href="{{ url_for('parent.messages') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-envelope me-3 text-info"></i>Messages
+                        {% if unread_messages > 0 %}
+                        <span class="badge bg-danger float-end">{{ unread_messages }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('auth.profile') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-cog me-3 text-secondary"></i>Mon profil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annonces -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-bullhorn me-2"></i>Annonces
+            </div>
+            <div class="card-body">
+                {% if announcements %}
+                {% for announcement in announcements[:4] %}
+                <div class="mb-3 pb-2 border-bottom">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">
+                            {% if announcement.is_pinned %}
+                            <i class="fas fa-thumbtack text-warning me-1"></i>
+                            {% endif %}
+                            {{ announcement.title }}
+                        </h6>
+                        <small class="text-muted">{{ announcement.created_at.strftime('%d/%m') }}</small>
+                    </div>
+                    <p class="text-muted small mb-0">{{ announcement.content[:100] }}{% if announcement.content|length > 100 %}...{% endif %}</p>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune annonce</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Récapitulatif des notes récentes -->
+{% if recent_grades %}
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-star me-2"></i>Notes récentes de vos enfants
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Enfant</th>
+                        <th>Matière</th>
+                        <th>Période</th>
+                        <th class="text-center">Note</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in recent_grades[:10] %}
+                    <tr>
+                        <td><strong>{{ grade.student.full_name }}</strong></td>
+                        <td>{{ grade.subject.name }}</td>
+                        <td><span class="badge bg-secondary">P{{ grade.period }}</span></td>
+                        <td class="text-center">
+                            <span class="badge {{ 'bg-success' if grade.average >= 10 else 'bg-danger' }}">
+                                {{ '%.2f'|format(grade.average) }}/20
+                            </span>
+                        </td>
+                        <td><small class="text-muted">{{ grade.updated_at.strftime('%d/%m/%Y') if grade.updated_at else '-' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

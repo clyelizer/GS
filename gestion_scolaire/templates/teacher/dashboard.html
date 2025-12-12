@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord Enseignant{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="fas fa-chalkboard-teacher me-2"></i>Tableau de bord</h1>
+        <p class="text-muted mb-0">Bienvenue, {{ current_user.full_name }}</p>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-primary fs-6">
+            <i class="fas fa-calendar me-1"></i>
+            {{ now().strftime('%d/%m/%Y') if now else '' }}
+        </span>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Mes classes</h6>
+                        <h2>{{ classes|length if classes else 0 }}</h2>
+                    </div>
+                    <i class="fas fa-chalkboard fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Mes élèves</h6>
+                        <h2>{{ total_students if total_students else 0 }}</h2>
+                    </div>
+                    <i class="fas fa-user-graduate fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Notes saisies</h6>
+                        <h2>{{ total_grades if total_grades else 0 }}</h2>
+                    </div>
+                    <i class="fas fa-star fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Matières</h6>
+                        <h2>{{ subjects|length if subjects else 0 }}</h2>
+                    </div>
+                    <i class="fas fa-book fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Actions rapides -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-bolt me-2"></i>Actions rapides
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('teacher.grades') }}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-edit fa-2x mb-2 d-block"></i>
+                            Saisir des notes
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('teacher.attendance') }}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-clipboard-check fa-2x mb-2 d-block"></i>
+                            Appel
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('teacher.bulletins') }}" class="btn btn-outline-warning w-100 py-3">
+                            <i class="fas fa-file-pdf fa-2x mb-2 d-block"></i>
+                            Bulletins
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-info w-100 py-3">
+                            <i class="fas fa-user fa-2x mb-2 d-block"></i>
+                            Mon profil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mes classes -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-chalkboard me-2"></i>Mes classes
+            </div>
+            <div class="card-body">
+                {% if classes %}
+                <div class="list-group list-group-flush">
+                    {% for class in classes[:5] %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ class.name }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                {{ class.students|length }} élèves
+                            </small>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{{ url_for('teacher.grades', class_id=class.id) }}" class="btn btn-sm btn-outline-primary" title="Notes">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{{ url_for('teacher.attendance', class_id=class.id) }}" class="btn btn-sm btn-outline-success" title="Appel">
+                                <i class="fas fa-clipboard-check"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if classes|length > 5 %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('teacher.grades') }}" class="btn btn-link">Voir toutes les classes</a>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chalkboard fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune classe assignée</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Annonces -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-bullhorn me-2"></i>Annonces récentes
+            </div>
+            <div class="card-body">
+                {% if announcements %}
+                {% for announcement in announcements[:3] %}
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">
+                            {% if announcement.is_pinned %}
+                            <i class="fas fa-thumbtack text-warning me-1"></i>
+                            {% endif %}
+                            {{ announcement.title }}
+                        </h6>
+                        <small class="text-muted">{{ announcement.created_at.strftime('%d/%m') }}</small>
+                    </div>
+                    <p class="text-muted mb-0 small">{{ announcement.content[:100] }}{% if announcement.content|length > 100 %}...{% endif %}</p>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune annonce</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendrier rapide -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt me-2"></i>Périodes scolaires
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>1ère période</span>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>2ème période</span>
+                        <span class="badge bg-secondary">À venir</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>3ème période</span>
+                        <span class="badge bg-secondary">À venir</span>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Sélectionnez une période lors de la saisie des notes
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    
+    .register-container {
+        padding: 40px 20px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .register-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        max-width: 600px;
+        width: 100%;
+        padding: 40px;
+    }
+    
+    .register-card h3 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .form-floating {
+        margin-bottom: 15px;
+    }
+    
+    .form-floating .form-control,
+    .form-floating .form-select {
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        height: 55px;
+    }
+    
+    .form-floating .form-control:focus,
+    .form-floating .form-select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .btn-register {
+        width: 100%;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border: none;
+        margin-top: 10px;
+    }
+    
+    .role-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .role-btn {
+        flex: 1;
+        padding: 15px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+    
+    .role-btn:hover {
+        border-color: #2563eb;
+    }
+    
+    .role-btn.active {
+        border-color: #2563eb;
+        background: #eff6ff;
+    }
+    
+    .role-btn i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .sidebar, .navbar {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+    
+    #class_id_group, #registration_code_group {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <h3><i class="fas fa-user-plus me-2 text-primary"></i>Créer un compte</h3>
+        
+        <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Prénom">
+                        <label for="first_name">Prénom</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Nom">
+                        <label for="last_name">Nom</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-floating">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Nom d'utilisateur" required minlength="3">
+                <label for="username"><i class="fas fa-user me-2"></i>Nom d'utilisateur *</label>
+            </div>
+            
+            <div class="form-floating">
+                <input type="email" class="form-control" id="email" name="email" placeholder="Email">
+                <label for="email"><i class="fas fa-envelope me-2"></i>Email</label>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Mot de passe" required minlength="6">
+                        <label for="password"><i class="fas fa-lock me-2"></i>Mot de passe *</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirmer" required>
+                        <label for="confirm_password"><i class="fas fa-lock me-2"></i>Confirmer *</label>
+                    </div>
+                </div>
+            </div>
+            
+            <label class="form-label mt-3 mb-2"><i class="fas fa-id-badge me-2"></i>Type de compte *</label>
+            <div class="role-selector">
+                <div class="role-btn" data-role="student" onclick="selectRole('student')">
+                    <i class="fas fa-user-graduate text-primary"></i>
+                    <span>Élève</span>
+                </div>
+                <div class="role-btn" data-role="teacher" onclick="selectRole('teacher')">
+                    <i class="fas fa-chalkboard-teacher text-success"></i>
+                    <span>Enseignant</span>
+                </div>
+                <div class="role-btn" data-role="parent" onclick="selectRole('parent')">
+                    <i class="fas fa-user-friends text-warning"></i>
+                    <span>Parent</span>
+                </div>
+            </div>
+            <input type="hidden" name="role" id="role" value="student">
+            
+            <div id="class_id_group">
+                <div class="form-floating">
+                    <select class="form-select" id="class_id" name="class_id">
+                        <option value="">-- Sélectionner une classe --</option>
+                        {% for class in school_classes %}
+                        <option value="{{ class.id }}">{{ class.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="class_id"><i class="fas fa-school me-2"></i>Classe *</label>
+                </div>
+            </div>
+            
+            <div id="registration_code_group">
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="registration_code" name="registration_code" placeholder="Code d'inscription">
+                    <label for="registration_code"><i class="fas fa-key me-2"></i>Code d'inscription *</label>
+                </div>
+                <small class="text-muted">Demandez le code à l'administration</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-register">
+                <i class="fas fa-user-plus me-2"></i>Créer mon compte
+            </button>
+        </form>
+        
+        <hr class="my-4">
+        
+        <div class="text-center">
+            <p class="text-muted mb-2">Déjà inscrit ?</p>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">
+                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectRole(role) {
+    // Update active state
+    document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.role-btn[data-role="${role}"]`).classList.add('active');
+    
+    // Update hidden field
+    document.getElementById('role').value = role;
+    
+    // Show/hide conditional fields
+    const classGroup = document.getElementById('class_id_group');
+    const codeGroup = document.getElementById('registration_code_group');
+    
+    if (role === 'student') {
+        classGroup.style.display = 'block';
+        codeGroup.style.display = 'none';
+    } else if (role === 'teacher' || role === 'admin') {
+        classGroup.style.display = 'none';
+        codeGroup.style.display = 'block';
+    } else {
+        classGroup.style.display = 'none';
+        codeGroup.style.display = 'none';
+    }
+}
+
+// Initialize
+selectRole('student');
+</script>
+{% endblock %}

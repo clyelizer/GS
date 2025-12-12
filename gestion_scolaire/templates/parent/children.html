@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Mes enfants{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-users me-2"></i>Mes enfants</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('parent.dashboard') }}">Espace Parent</a></li>
+            <li class="breadcrumb-item active">Mes enfants</li>
+        </ol>
+    </nav>
+</div>
+
+{% if children %}
+<div class="row">
+    {% for child in children %}
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-user-graduate me-2"></i>{{ child.full_name }}</span>
+                    <span class="badge bg-light text-primary">{{ child.school_class.name if child.school_class else 'Non assigné' }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Informations -->
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <p class="mb-1"><strong>Matricule:</strong></p>
+                        <p class="text-muted">{{ child.matricule or 'Non assigné' }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="mb-1"><strong>Email:</strong></p>
+                        <p class="text-muted">{{ child.email }}</p>
+                    </div>
+                </div>
+
+                <!-- Statistiques -->
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <div class="text-center p-2 bg-light rounded">
+                            <h5 class="{{ 'text-success' if child.average >= 10 else 'text-danger' }}">
+                                {{ '%.2f'|format(child.average) if child.average else '-' }}
+                            </h5>
+                            <small class="text-muted">Moyenne</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center p-2 bg-light rounded">
+                            <h5 class="text-primary">{{ child.rank if child.rank else '-' }}</h5>
+                            <small class="text-muted">Rang</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center p-2 bg-light rounded">
+                            <h5 class="text-info">{{ '%.0f'|format(child.attendance_rate) if child.attendance_rate else '-' }}%</h5>
+                            <small class="text-muted">Présence</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-grid gap-2">
+                    <div class="btn-group">
+                        <a href="{{ url_for('parent.child_grades', child_id=child.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-star me-1"></i>Notes
+                        </a>
+                        <a href="{{ url_for('parent.child_bulletin', child_id=child.id) }}" class="btn btn-outline-success">
+                            <i class="fas fa-file-pdf me-1"></i>Bulletin
+                        </a>
+                        <a href="{{ url_for('parent.child_attendance', child_id=child.id) }}" class="btn btn-outline-warning">
+                            <i class="fas fa-calendar me-1"></i>Absences
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Comparatif -->
+{% if children|length > 1 %}
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-chart-bar me-2"></i>Comparatif des moyennes
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Enfant</th>
+                        <th>Classe</th>
+                        <th class="text-center">P1</th>
+                        <th class="text-center">P2</th>
+                        <th class="text-center">P3</th>
+                        <th class="text-center">Moyenne annuelle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for child in children %}
+                    <tr>
+                        <td><strong>{{ child.full_name }}</strong></td>
+                        <td>{{ child.school_class.name if child.school_class else '-' }}</td>
+                        {% for p in [1, 2, 3] %}
+                        <td class="text-center">
+                            {% if child.averages.get(p) %}
+                            <span class="badge {{ 'bg-success' if child.averages[p] >= 10 else 'bg-danger' }}">
+                                {{ '%.2f'|format(child.averages[p]) }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="text-center">
+                            {% if child.average %}
+                            <span class="badge {{ 'bg-success' if child.average >= 10 else 'bg-danger' }} fs-6">
+                                {{ '%.2f'|format(child.average) }}/20
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-child fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Aucun enfant associé</h5>
+        <p class="text-muted">
+            Pour associer un enfant à votre compte, veuillez contacter l'administration de l'établissement.
+        </p>
+        <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Munissez-vous du matricule de votre enfant pour la procédure d'association.
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

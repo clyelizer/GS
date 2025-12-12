@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Mon espace élève{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="fas fa-user-graduate me-2"></i>Mon espace</h1>
+        <p class="text-muted mb-0">Bienvenue, {{ current_user.full_name }}</p>
+    </div>
+    <div class="text-end">
+        {% if current_user.school_class %}
+        <span class="badge bg-primary fs-6">
+            <i class="fas fa-chalkboard me-1"></i>{{ current_user.school_class.name }}
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Carte de l'élève -->
+<div class="card mb-4 border-primary">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <i class="fas fa-user fa-2x"></i>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <h4 class="mb-1">{{ current_user.full_name }}</h4>
+                <p class="mb-1">
+                    <i class="fas fa-id-card me-2"></i>Matricule: <strong>{{ current_user.matricule or 'Non assigné' }}</strong>
+                </p>
+                <p class="mb-1">
+                    <i class="fas fa-envelope me-2"></i>{{ current_user.email }}
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-chalkboard me-2"></i>Classe: <strong>{{ current_user.school_class.name if current_user.school_class else 'Non assigné' }}</strong>
+                </p>
+            </div>
+            <div class="col-md-3 text-end">
+                {% if overall_average %}
+                <div class="h2 mb-0 {{ 'text-success' if overall_average >= 10 else 'text-danger' }}">
+                    {{ '%.2f'|format(overall_average) }}/20
+                </div>
+                <small class="text-muted">Moyenne générale</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Moyenne</h6>
+                        <h2>{{ '%.2f'|format(overall_average) if overall_average else '-' }}</h2>
+                    </div>
+                    <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Rang</h6>
+                        <h2>{{ rank if rank else '-' }}<small>/{{ class_size if class_size else '-' }}</small></h2>
+                    </div>
+                    <i class="fas fa-trophy fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Matières</h6>
+                        <h2>{{ subjects_count if subjects_count else 0 }}</h2>
+                    </div>
+                    <i class="fas fa-book fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Présence</h6>
+                        <h2>{{ '%.0f'|format(attendance_rate) if attendance_rate else '-' }}%</h2>
+                    </div>
+                    <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Actions rapides -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-bolt me-2"></i>Actions rapides
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('student.grades') }}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-star fa-2x mb-2 d-block"></i>
+                            Mes notes
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('student.bulletin') }}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-file-pdf fa-2x mb-2 d-block"></i>
+                            Mon bulletin
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('student.attendance') }}" class="btn btn-outline-warning w-100 py-3">
+                            <i class="fas fa-calendar-check fa-2x mb-2 d-block"></i>
+                            Mes absences
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-info w-100 py-3">
+                            <i class="fas fa-user fa-2x mb-2 d-block"></i>
+                            Mon profil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes récentes -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-star me-2"></i>Dernières notes</span>
+                <a href="{{ url_for('student.grades') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                {% if recent_grades %}
+                <div class="list-group list-group-flush">
+                    {% for grade in recent_grades[:5] %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ grade.subject.name }}</strong>
+                            <br>
+                            <small class="text-muted">Période {{ grade.period }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge {{ 'bg-success' if grade.average >= 10 else 'bg-danger' }} fs-6">
+                                {{ '%.2f'|format(grade.average) }}/20
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune note disponible</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Graphique des notes -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-chart-bar me-2"></i>Aperçu des notes par matière
+            </div>
+            <div class="card-body">
+                {% if grades_by_subject %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Matière</th>
+                                <th class="text-center">P1</th>
+                                <th class="text-center">P2</th>
+                                <th class="text-center">P3</th>
+                                <th class="text-center">Coef.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subject, periods in grades_by_subject.items() %}
+                            <tr>
+                                <td><strong>{{ subject }}</strong></td>
+                                {% for p in [1, 2, 3] %}
+                                <td class="text-center">
+                                    {% if periods.get(p) %}
+                                    <span class="badge {{ 'bg-success' if periods[p] >= 10 else 'bg-danger' }}">
+                                        {{ '%.2f'|format(periods[p]) }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ periods.get('coef', 1) }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune note disponible</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Annonces -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-bullhorn me-2"></i>Annonces
+            </div>
+            <div class="card-body">
+                {% if announcements %}
+                {% for announcement in announcements[:4] %}
+                <div class="mb-3 pb-2 border-bottom">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1">
+                            {% if announcement.is_pinned %}
+                            <i class="fas fa-thumbtack text-warning me-1"></i>
+                            {% endif %}
+                            {{ announcement.title }}
+                        </h6>
+                        <small class="text-muted">{{ announcement.created_at.strftime('%d/%m') }}</small>
+                    </div>
+                    <p class="text-muted small mb-0">{{ announcement.content[:80] }}{% if announcement.content|length > 80 %}...{% endif %}</p>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune annonce</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

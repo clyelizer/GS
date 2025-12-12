@@ -20,17 +20,34 @@ def init_db(app=None):
         # Créer toutes les tables
         db.create_all()
         
-        # Créer le compte enseignant par défaut s'il n'existe pas
-        from gestion_scolaire.models import User, SchoolClass, BulletinStructure
+        # Créer les comptes par défaut
+        from gestion_scolaire.models import User, SchoolClass, BulletinStructure, Subject
         
-        if not User.query.filter_by(username='teacher').first():
+        # Compte Admin
+        if not User.query.filter_by(username='admin').first():
+            admin = User(
+                username='admin',
+                email='admin@ecole.com',
+                password_hash=generate_password_hash('admin123'),
+                role='admin',
+                first_name='Administrateur',
+                last_name='Système'
+            )
+            db.session.add(admin)
+            print("✅ Compte admin créé: admin / admin123")
+        
+        # Compte enseignant
+        if not User.query.filter_by(username='teacher1').first():
             teacher = User(
-                username='teacher',
-                password=generate_password_hash('password123'),
-                role='teacher'
+                username='teacher1',
+                email='teacher@ecole.com',
+                password_hash=generate_password_hash('teacher123'),
+                role='teacher',
+                first_name='Jean',
+                last_name='Professeur'
             )
             db.session.add(teacher)
-            print("✅ Compte enseignant créé: teacher / password123")
+            print("✅ Compte enseignant créé: teacher1 / teacher123")
         
         # Créer les classes par défaut
         default_classes = [
@@ -42,6 +59,28 @@ def init_db(app=None):
             if not SchoolClass.query.filter_by(name=class_name).first():
                 new_class = SchoolClass(name=class_name)
                 db.session.add(new_class)
+        
+        # Créer les matières par défaut
+        default_subjects = [
+            ("Mathématiques", 5),
+            ("Physique", 4),
+            ("Chimie", 4),
+            ("SVT", 3),
+            ("Français", 4),
+            ("Anglais", 3),
+            ("Philosophie", 3),
+            ("Histoire-Géographie", 3),
+            ("E.C.M", 2),
+            ("EPS", 2),
+            ("Informatique", 2),
+            ("Espagnol", 2),
+            ("Allemand", 2),
+        ]
+        
+        for subject_name, coef in default_subjects:
+            if not Subject.query.filter_by(name=subject_name).first():
+                new_subject = Subject(name=subject_name, coefficient=coef)
+                db.session.add(new_subject)
         
         # Créer quelques structures de bulletin par défaut
         default_structures_data = [

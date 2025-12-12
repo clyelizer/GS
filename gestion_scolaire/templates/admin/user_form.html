@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %} un utilisateur{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-user-{% if action == 'edit' %}edit{% else %}plus{% endif %} me-2"></i>{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %} un utilisateur</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Administration</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">Utilisateurs</a></li>
+            <li class="breadcrumb-item active">{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom</label>
+                            <input type="text" class="form-control" name="first_name" value="{{ user.first_name if user else '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom</label>
+                            <input type="text" class="form-control" name="last_name" value="{{ user.last_name if user else '' }}">
+                        </div>
+                    </div>
+                    
+                    {% if action == 'add' %}
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="username" required minlength="3">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" value="{{ user.email if user else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" name="phone" value="{{ user.phone if user else '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rôle <span class="text-danger">*</span></label>
+                        <select class="form-select" name="role" id="role" required onchange="toggleClassField()">
+                            <option value="student" {% if user and user.role == 'student' %}selected{% endif %}>Élève</option>
+                            <option value="teacher" {% if user and user.role == 'teacher' %}selected{% endif %}>Enseignant</option>
+                            <option value="parent" {% if user and user.role == 'parent' %}selected{% endif %}>Parent</option>
+                            <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Administrateur</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="class_field" style="{% if user and user.role != 'student' %}display: none;{% endif %}">
+                        <label class="form-label">Classe</label>
+                        <select class="form-select" name="class_id">
+                            <option value="">-- Sélectionner --</option>
+                            {% for class in school_classes %}
+                            <option value="{{ class.id }}" {% if user and user.current_class_id == class.id %}selected{% endif %}>
+                                {{ class.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    {% if action == 'add' %}
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="password" required minlength="6">
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <label class="form-label">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+                        <input type="password" class="form-control" name="new_password" minlength="6">
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if user and user.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            Compte actif
+                        </label>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{% if action == 'edit' %}Enregistrer{% else %}Créer{% endif %}
+                        </button>
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    {% if action == 'edit' and user %}
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle me-2"></i>Informations
+            </div>
+            <div class="card-body">
+                <p><strong>Identifiant:</strong> {{ user.username }}</p>
+                <p><strong>Créé le:</strong> {{ user.created_at|datetime_format }}</p>
+                {% if user.last_login %}
+                <p><strong>Dernière connexion:</strong> {{ user.last_login|datetime_format }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleClassField() {
+    const role = document.getElementById('role').value;
+    const classField = document.getElementById('class_field');
+    classField.style.display = role === 'student' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

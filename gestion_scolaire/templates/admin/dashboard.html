@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active">Administration</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-6 col-xl-3 mb-3">
+        <div class="stat-card primary">
+            <div class="stat-value">{{ stats.total_students }}</div>
+            <div class="stat-label">Élèves inscrits</div>
+            <i class="fas fa-user-graduate stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3 mb-3">
+        <div class="stat-card success">
+            <div class="stat-value">{{ stats.total_teachers }}</div>
+            <div class="stat-label">Enseignants</div>
+            <i class="fas fa-chalkboard-teacher stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3 mb-3">
+        <div class="stat-card warning">
+            <div class="stat-value">{{ stats.total_classes }}</div>
+            <div class="stat-label">Classes</div>
+            <i class="fas fa-school stat-icon"></i>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3 mb-3">
+        <div class="stat-card info">
+            <div class="stat-value">{{ stats.total_grades }}</div>
+            <div class="stat-label">Notes saisies</div>
+            <i class="fas fa-chart-line stat-icon"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Utilisateurs récents -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-users me-2"></i>Utilisateurs récents</span>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Utilisateur</th>
+                                <th>Rôle</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in stats.recent_users %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; font-size: 0.8rem;">
+                                            {{ user.username[0] | upper }}
+                                        </div>
+                                        {{ user.full_name }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'teacher' %}success{% elif user.role == 'student' %}primary{% else %}warning{% endif %}">
+                                        {{ user.role | capitalize }}
+                                    </span>
+                                </td>
+                                <td class="text-muted">{{ user.created_at|date_format }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">Aucun utilisateur récent</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Annonces récentes -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-bullhorn me-2"></i>Annonces récentes</span>
+                <a href="{{ url_for('admin.announcements') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_announcements %}
+                <div class="list-group list-group-flush">
+                    {% for announcement in stats.recent_announcements %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ announcement.title }}</h6>
+                                <p class="mb-1 text-muted small">{{ announcement.content[:100] }}...</p>
+                                <small class="text-muted">{{ announcement.created_at|datetime_format }}</small>
+                            </div>
+                            <span class="badge bg-{% if announcement.priority == 'urgent' %}danger{% elif announcement.priority == 'high' %}warning{% else %}secondary{% endif %}">
+                                {{ announcement.priority | capitalize }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">Aucune annonce récente</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bolt me-2"></i>Actions rapides
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="{{ url_for('admin.add_user') }}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-user-plus d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Ajouter utilisateur
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="{{ url_for('admin.add_class') }}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-plus-circle d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Ajouter classe
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="{{ url_for('admin.add_subject') }}" class="btn btn-outline-warning w-100 py-3">
+                            <i class="fas fa-book d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Ajouter matière
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <a href="{{ url_for('admin.add_announcement') }}" class="btn btn-outline-info w-100 py-3">
+                            <i class="fas fa-bullhorn d-block mb-2" style="font-size: 1.5rem;"></i>
+                            Nouvelle annonce
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %} une classe{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-{% if action == 'edit' %}edit{% else %}plus{% endif %} me-2"></i>{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %} une classe</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Administration</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.classes') }}">Classes</a></li>
+            <li class="breadcrumb-item active">{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nom de la classe <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" value="{{ school_class.name if school_class else '' }}" required placeholder="Ex: Terminale C">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Niveau</label>
+                            <select class="form-select" name="level">
+                                <option value="">-- Sélectionner --</option>
+                                <option value="Seconde" {% if school_class and school_class.level == 'Seconde' %}selected{% endif %}>Seconde</option>
+                                <option value="Première" {% if school_class and school_class.level == 'Première' %}selected{% endif %}>Première</option>
+                                <option value="Terminale" {% if school_class and school_class.level == 'Terminale' %}selected{% endif %}>Terminale</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Section</label>
+                            <select class="form-select" name="section">
+                                <option value="">-- Sélectionner --</option>
+                                <option value="A" {% if school_class and school_class.section == 'A' %}selected{% endif %}>A (Littéraire)</option>
+                                <option value="C" {% if school_class and school_class.section == 'C' %}selected{% endif %}>C (Scientifique)</option>
+                                <option value="D" {% if school_class and school_class.section == 'D' %}selected{% endif %}>D (Scientifique)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Professeur principal</label>
+                        <select class="form-select" name="main_teacher_id">
+                            <option value="">-- Sélectionner --</option>
+                            {% for teacher in teachers %}
+                            <option value="{{ teacher.id }}" {% if school_class and school_class.main_teacher_id == teacher.id %}selected{% endif %}>
+                                {{ teacher.full_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Capacité</label>
+                        <input type="number" class="form-control" name="capacity" value="{{ school_class.capacity if school_class else 50 }}" min="1" max="100">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Description optionnelle...">{{ school_class.description if school_class else '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{% if action == 'edit' %}Enregistrer{% else %}Créer{% endif %}
+                        </button>
+                        <a href="{{ url_for('admin.classes') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

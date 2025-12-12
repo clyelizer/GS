@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des notes{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-edit me-2"></i>Gestion des notes</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('teacher.dashboard') }}">Tableau de bord</a></li>
+            <li class="breadcrumb-item active">Notes</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Filtres -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-filter me-2"></i>Sélection
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('teacher.grades') }}" id="filterForm">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Classe <span class="text-danger">*</span></label>
+                    <select class="form-select" name="class_id" id="classSelect" onchange="this.form.submit()">
+                        <option value="">-- Sélectionner une classe --</option>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}" {{ 'selected' if selected_class and selected_class.id == class.id }}>
+                            {{ class.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Matière <span class="text-danger">*</span></label>
+                    <select class="form-select" name="subject_id" id="subjectSelect" {{ 'disabled' if not selected_class }} onchange="this.form.submit()">
+                        <option value="">-- Sélectionner une matière --</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {{ 'selected' if selected_subject and selected_subject.id == subject.id }}>
+                            {{ subject.name }} (Coef. {{ subject.coefficient }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Période <span class="text-danger">*</span></label>
+                    <select class="form-select" name="period" id="periodSelect" onchange="this.form.submit()">
+                        <option value="1" {{ 'selected' if selected_period == 1 }}>1ère période</option>
+                        <option value="2" {{ 'selected' if selected_period == 2 }}>2ème période</option>
+                        <option value="3" {{ 'selected' if selected_period == 3 }}>3ème période</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-secondary w-100" onclick="window.location.href='{{ url_for('teacher.grades') }}'">
+                        <i class="fas fa-redo me-2"></i>Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tableau des notes -->
+{% if selected_class and selected_subject %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+            <i class="fas fa-users me-2"></i>
+            {{ selected_class.name }} - {{ selected_subject.name }} - Période {{ selected_period }}
+        </span>
+        <span class="badge bg-primary">{{ students|length }} élèves</span>
+    </div>
+    <div class="card-body">
+        {% if students %}
+        <form method="POST" action="{{ url_for('teacher.save_grades') }}">
+            <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+            <input type="hidden" name="subject_id" value="{{ selected_subject.id }}">
+            <input type="hidden" name="period" value="{{ selected_period }}">
+            
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                    <thead class="table-primary">
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 25%">Élève</th>
+                            <th class="text-center" style="width: 14%">Moyenne Classe</th>
+                            <th class="text-center" style="width: 14%">Note Compo</th>
+                            <th class="text-center" style="width: 14%">Coefficient</th>
+                            <th class="text-center" style="width: 14%">Moyenne</th>
+                            <th style="width: 14%">Appréciation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        {% set grade = grades.get(student.id) %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <strong>{{ student.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ student.matricule or '-' }}</small>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center grade-input" 
+                                       name="moy_cl_{{ student.id }}" 
+                                       value="{{ grade.moy_cl if grade else '' }}"
+                                       min="0" max="20" step="0.25" 
+                                       placeholder="0-20"
+                                       onchange="calculateAverage({{ student.id }})">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center grade-input" 
+                                       name="n_compo_{{ student.id }}" 
+                                       value="{{ grade.n_compo if grade else '' }}"
+                                       min="0" max="20" step="0.25"
+                                       placeholder="0-20"
+                                       onchange="calculateAverage({{ student.id }})">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center" 
+                                       name="coef_{{ student.id }}" 
+                                       value="{{ grade.coef if grade else selected_subject.coefficient }}"
+                                       min="1" max="10" step="1"
+                                       readonly>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm text-center fw-bold" 
+                                       id="average_{{ student.id }}"
+                                       value="{{ '%.2f'|format(grade.average) if grade and grade.average else '' }}"
+                                       readonly>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" 
+                                       name="appreciation_{{ student.id }}" 
+                                       value="{{ grade.appreciation if grade else '' }}"
+                                       placeholder="Appréciation">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-3">
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" onclick="autoFillAppreciation()">
+                        <i class="fas fa-magic me-2"></i>Auto-appréciation
+                    </button>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Enregistrer les notes
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucun élève dans cette classe</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-hand-pointer fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Sélectionnez une classe et une matière</h5>
+        <p class="text-muted">Pour commencer la saisie des notes, veuillez sélectionner une classe et une matière dans les filtres ci-dessus.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Légende -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-info-circle me-2"></i>Légende
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <ul class="list-unstyled mb-0">
+                    <li><strong>Moy. Classe</strong> : Moyenne des notes de classe (interrogations, devoirs)</li>
+                    <li><strong>Note Compo</strong> : Note de composition/examen</li>
+                    <li><strong>Coefficient</strong> : Coefficient de la matière</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul class="list-unstyled mb-0">
+                    <li><strong>Moyenne</strong> : Calculée automatiquement (Moy. Classe + 2×Compo) / 3</li>
+                    <li><strong>Appréciation</strong> : Commentaire sur le travail de l'élève</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function calculateAverage(studentId) {
+    const moyCl = parseFloat(document.querySelector(`[name="moy_cl_${studentId}"]`).value) || 0;
+    const nCompo = parseFloat(document.querySelector(`[name="n_compo_${studentId}"]`).value) || 0;
+    
+    if (moyCl > 0 || nCompo > 0) {
+        // Formule : (Moy. Classe + 2 × Note Compo) / 3
+        const average = (moyCl + 2 * nCompo) / 3;
+        document.getElementById(`average_${studentId}`).value = average.toFixed(2);
+        
+        // Coloration selon la moyenne
+        const avgInput = document.getElementById(`average_${studentId}`);
+        avgInput.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'text-white');
+        if (average >= 14) {
+            avgInput.classList.add('bg-success', 'text-white');
+        } else if (average >= 10) {
+            avgInput.classList.add('bg-warning');
+        } else {
+            avgInput.classList.add('bg-danger', 'text-white');
+        }
+    } else {
+        document.getElementById(`average_${studentId}`).value = '';
+    }
+}
+
+function autoFillAppreciation() {
+    document.querySelectorAll('[id^="average_"]').forEach(avgInput => {
+        const studentId = avgInput.id.replace('average_', '');
+        const average = parseFloat(avgInput.value) || 0;
+        const appreciationInput = document.querySelector(`[name="appreciation_${studentId}"]`);
+        
+        if (average > 0 && !appreciationInput.value) {
+            if (average >= 16) {
+                appreciationInput.value = 'Excellent travail';
+            } else if (average >= 14) {
+                appreciationInput.value = 'Très bien';
+            } else if (average >= 12) {
+                appreciationInput.value = 'Bien';
+            } else if (average >= 10) {
+                appreciationInput.value = 'Assez bien';
+            } else if (average >= 8) {
+                appreciationInput.value = 'Peut mieux faire';
+            } else {
+                appreciationInput.value = 'Insuffisant';
+            }
+        }
+    });
+}
+
+// Calculer les moyennes au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.grade-input').forEach(input => {
+        const studentId = input.name.split('_').pop();
+        calculateAverage(studentId);
+    });
+});
+</script>
+{% endblock %}

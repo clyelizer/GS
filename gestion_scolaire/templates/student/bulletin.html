@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Mon bulletin{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-file-pdf me-2"></i>Mon bulletin</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('student.dashboard') }}">Mon espace</a></li>
+            <li class="breadcrumb-item active">Mon bulletin</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Sélection de période -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row align-items-end">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <label class="form-label">Période</label>
+                <select class="form-select" name="period" onchange="this.form.submit()">
+                    <option value="1" {{ 'selected' if selected_period == 1 }}>1ère période</option>
+                    <option value="2" {{ 'selected' if selected_period == 2 }}>2ème période</option>
+                    <option value="3" {{ 'selected' if selected_period == 3 }}>3ème période</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <span class="badge bg-primary fs-6">
+                    <i class="fas fa-chalkboard me-1"></i>{{ current_user.school_class.name if current_user.school_class else 'Non assigné' }}
+                </span>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if bulletin_available %}
+                <a href="{{ url_for('student.download_bulletin', period=selected_period) }}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download me-2"></i>Télécharger le bulletin
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if bulletin_available %}
+<!-- Aperçu du bulletin -->
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-eye me-2"></i>Aperçu du bulletin - Période {{ selected_period }}
+    </div>
+    <div class="card-body">
+        <!-- En-tête -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5>{{ school_name or 'Établissement Scolaire' }}</h5>
+                <p class="mb-1"><strong>Année scolaire:</strong> {{ academic_year or '2024-2025' }}</p>
+                <p class="mb-0"><strong>Période:</strong> {{ selected_period }}{% if selected_period == 1 %}ère{% else %}ème{% endif %}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <h5>{{ current_user.full_name }}</h5>
+                <p class="mb-1"><strong>Matricule:</strong> {{ current_user.matricule or '-' }}</p>
+                <p class="mb-0"><strong>Classe:</strong> {{ current_user.school_class.name if current_user.school_class else '-' }}</p>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Notes -->
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Matière</th>
+                        <th class="text-center" style="width: 12%">Moy. Classe</th>
+                        <th class="text-center" style="width: 12%">Note Compo</th>
+                        <th class="text-center" style="width: 10%">Coef.</th>
+                        <th class="text-center" style="width: 12%">Moyenne</th>
+                        <th style="width: 25%">Appréciation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if subjects_part1 %}
+                    <tr class="table-secondary">
+                        <th colspan="6">Matières principales</th>
+                    </tr>
+                    {% for grade in subjects_part1 %}
+                    <tr>
+                        <td>{{ grade.subject.name }}</td>
+                        <td class="text-center">{{ '%.2f'|format(grade.moy_cl) if grade.moy_cl else '-' }}</td>
+                        <td class="text-center">{{ '%.2f'|format(grade.n_compo) if grade.n_compo else '-' }}</td>
+                        <td class="text-center">{{ grade.coef }}</td>
+                        <td class="text-center">
+                            <strong class="{{ 'text-success' if grade.average >= 10 else 'text-danger' }}">
+                                {{ '%.2f'|format(grade.average) }}
+                            </strong>
+                        </td>
+                        <td><small>{{ grade.appreciation or '-' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if subjects_part2 %}
+                    <tr class="table-secondary">
+                        <th colspan="6">Matières secondaires</th>
+                    </tr>
+                    {% for grade in subjects_part2 %}
+                    <tr>
+                        <td>{{ grade.subject.name }}</td>
+                        <td class="text-center">{{ '%.2f'|format(grade.moy_cl) if grade.moy_cl else '-' }}</td>
+                        <td class="text-center">{{ '%.2f'|format(grade.n_compo) if grade.n_compo else '-' }}</td>
+                        <td class="text-center">{{ grade.coef }}</td>
+                        <td class="text-center">
+                            <strong class="{{ 'text-success' if grade.average >= 10 else 'text-danger' }}">
+                                {{ '%.2f'|format(grade.average) }}
+                            </strong>
+                        </td>
+                        <td><small>{{ grade.appreciation or '-' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="4" class="text-end">Total des coefficients:</th>
+                        <th class="text-center">{{ total_coef }}</th>
+                        <th></th>
+                    </tr>
+                    <tr class="table-primary">
+                        <th colspan="4" class="text-end">MOYENNE GÉNÉRALE:</th>
+                        <th class="text-center fs-5 {{ 'text-success' if overall_average >= 10 else 'text-danger' }}">
+                            {{ '%.2f'|format(overall_average) }}/20
+                        </th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Résumé -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Moyenne</h6>
+                        <h3 class="{{ 'text-success' if overall_average >= 10 else 'text-danger' }}">
+                            {{ '%.2f'|format(overall_average) }}/20
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-success">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Rang</h6>
+                        <h3 class="text-success">{{ rank or '-' }} / {{ class_size or '-' }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted">Mention</h6>
+                        <h3 class="text-info">
+                            {% if overall_average >= 16 %}
+                            Félicitations
+                            {% elif overall_average >= 14 %}
+                            Très Bien
+                            {% elif overall_average >= 12 %}
+                            Bien
+                            {% elif overall_average >= 10 %}
+                            Assez Bien
+                            {% else %}
+                            -
+                            {% endif %}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appréciation générale -->
+        {% if general_appreciation %}
+        <div class="card mt-4 border-secondary">
+            <div class="card-header">
+                <i class="fas fa-comment me-2"></i>Appréciation du conseil de classe
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ general_appreciation }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('student.download_bulletin', period=selected_period) }}" class="btn btn-primary btn-lg" target="_blank">
+                <i class="fas fa-download me-2"></i>Télécharger le bulletin PDF
+            </a>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-file-pdf fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Bulletin non disponible</h5>
+        <p class="text-muted">
+            Le bulletin de la période {{ selected_period }} n'est pas encore disponible.<br>
+            Les notes doivent être complétées par vos enseignants.
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Historique des bulletins -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-history me-2"></i>Historique des bulletins
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for p in [1, 2, 3] %}
+            <div class="col-md-4 mb-3">
+                <div class="card {{ 'border-success' if bulletins_status.get(p) else 'border-secondary' }}">
+                    <div class="card-body text-center">
+                        <h5>Période {{ p }}</h5>
+                        {% if bulletins_status.get(p) %}
+                        <p class="text-success mb-2">
+                            <i class="fas fa-check-circle me-1"></i>Disponible
+                        </p>
+                        <a href="{{ url_for('student.download_bulletin', period=p) }}" class="btn btn-sm btn-outline-success" target="_blank">
+                            <i class="fas fa-download me-1"></i>Télécharger
+                        </a>
+                        {% else %}
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-clock me-1"></i>Non disponible
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

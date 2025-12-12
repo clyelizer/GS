@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Bulletin de {{ child.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-file-pdf me-2"></i>Bulletin de {{ child.full_name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('parent.dashboard') }}">Espace Parent</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('parent.children') }}">Mes enfants</a></li>
+            <li class="breadcrumb-item active">Bulletin</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Sélection période -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row align-items-end">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <label class="form-label">Période</label>
+                <select class="form-select" name="period" onchange="this.form.submit()">
+                    {% for period in periods %}
+                    <option value="{{ period }}" {{ 'selected' if selected_period == period }}>
+                        Période {{ period }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <span class="badge bg-primary fs-6">
+                    <i class="fas fa-chalkboard me-1"></i>{{ child.school_class.name if child.school_class else 'Non assigné' }}
+                </span>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if grades %}
+                <a href="{{ url_for('parent.child_bulletin', child_id=child.id, period=selected_period, download=1) }}" 
+                   class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download me-2"></i>Télécharger PDF
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if grades %}
+<!-- Aperçu bulletin -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-file-alt me-2"></i>Bulletin scolaire - Période {{ selected_period }}
+    </div>
+    <div class="card-body">
+        <!-- En-tête -->
+        <div class="row mb-4 pb-3 border-bottom">
+            <div class="col-md-6">
+                <h6 class="text-muted">ÉLÈVE</h6>
+                <h5>{{ child.full_name }}</h5>
+                <p class="mb-0">Matricule: {{ child.matricule or '-' }}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <h6 class="text-muted">CLASSE</h6>
+                <h5>{{ child.school_class.name if child.school_class else '-' }}</h5>
+                <p class="mb-0">Année scolaire: 2024-2025</p>
+            </div>
+        </div>
+
+        <!-- Tableau des notes -->
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Matière</th>
+                        <th class="text-center" style="width: 12%">Moy. Classe</th>
+                        <th class="text-center" style="width: 12%">Note Compo</th>
+                        <th class="text-center" style="width: 10%">Coef.</th>
+                        <th class="text-center" style="width: 12%">Moyenne</th>
+                        <th style="width: 25%">Appréciation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td><strong>{{ grade.subject.name if grade.subject else '-' }}</strong></td>
+                        <td class="text-center">{{ '%.2f'|format(grade.moy_cl) if grade.moy_cl else '-' }}</td>
+                        <td class="text-center">{{ '%.2f'|format(grade.n_compo) if grade.n_compo else '-' }}</td>
+                        <td class="text-center">{{ grade.coef }}</td>
+                        <td class="text-center">
+                            <strong class="{{ 'text-success' if grade.average >= 10 else 'text-danger' }}">
+                                {{ '%.2f'|format(grade.average) }}
+                            </strong>
+                        </td>
+                        <td><small>{{ grade.appreciation or '-' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr class="table-primary">
+                        <th colspan="4" class="text-end">MOYENNE GÉNÉRALE:</th>
+                        <th class="text-center fs-5 {{ 'text-success' if overall_average >= 10 else 'text-danger' }}">
+                            {{ '%.2f'|format(overall_average) }}/20
+                        </th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Résumé -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card border-primary text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted">Moyenne</h6>
+                        <h3 class="{{ 'text-success' if overall_average >= 10 else 'text-danger' }}">
+                            {{ '%.2f'|format(overall_average) }}/20
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-success text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted">Matières</h6>
+                        <h3 class="text-primary">{{ grades|length }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-info text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted">Mention</h6>
+                        <h4 class="text-info">
+                            {% if overall_average >= 16 %}
+                            Excellent
+                            {% elif overall_average >= 14 %}
+                            Très Bien
+                            {% elif overall_average >= 12 %}
+                            Bien
+                            {% elif overall_average >= 10 %}
+                            Assez Bien
+                            {% else %}
+                            Insuffisant
+                            {% endif %}
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-file-pdf fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Bulletin non disponible</h5>
+        <p class="text-muted">
+            Le bulletin de la période {{ selected_period }} n'est pas encore disponible.<br>
+            Les notes de votre enfant seront affichées ici dès qu'elles seront saisies.
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Navigation -->
+<div class="d-flex justify-content-between mt-4">
+    <a href="{{ url_for('parent.children') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Retour à mes enfants
+    </a>
+    <div>
+        <a href="{{ url_for('parent.child_grades', child_id=child.id) }}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-star me-2"></i>Détail des notes
+        </a>
+        <a href="{{ url_for('parent.child_attendance', child_id=child.id) }}" class="btn btn-outline-warning">
+            <i class="fas fa-calendar-check me-2"></i>Absences
+        </a>
+    </div>
+</div>
+{% endblock %}

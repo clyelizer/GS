@@ -2,6 +2,7 @@
 
 Application complète de gestion scolaire avec 4 rôles : Admin, Enseignant, Élève, Parent.
 
+
 ---
 
 ## 🚀 LANCEMENT SUR GOOGLE COLAB
@@ -188,5 +189,6 @@ L'application utilise SQLite par défaut. Les modèles principaux :
 ---
 
 **© 2024 Lycée Michel ALLAIRE - Système de Gestion Scolaire**
+# School-manager
 # School-manager
 # School-manager

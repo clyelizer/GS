@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .login-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        overflow: hidden;
+        max-width: 900px;
+        width: 100%;
+    }
+    
+    .login-left {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: white;
+        padding: 60px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .login-left h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    
+    .login-left p {
+        opacity: 0.9;
+        line-height: 1.6;
+    }
+    
+    .login-left .features {
+        margin-top: 30px;
+    }
+    
+    .login-left .feature-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .login-left .feature-item i {
+        width: 40px;
+        height: 40px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+    }
+    
+    .login-right {
+        padding: 60px 40px;
+    }
+    
+    .login-right h3 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 30px;
+    }
+    
+    .form-floating {
+        margin-bottom: 20px;
+    }
+    
+    .form-floating .form-control {
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        height: 55px;
+    }
+    
+    .form-floating .form-control:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .btn-login {
+        width: 100%;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border: none;
+        margin-top: 10px;
+    }
+    
+    .btn-login:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    }
+    
+    .sidebar, .navbar {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="row g-0">
+            <div class="col-lg-5 login-left d-none d-lg-flex">
+                <div>
+                    <h2><i class="fas fa-graduation-cap me-2"></i>Lycée Michel ALLAIRE</h2>
+                    <p>Bienvenue sur notre plateforme de gestion scolaire. Accédez à vos notes, bulletins et suivez votre parcours académique.</p>
+                    
+                    <div class="features">
+                        <div class="feature-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Suivi des notes en temps réel</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>Bulletins téléchargeables</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-bell"></i>
+                            <span>Notifications et annonces</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-users"></i>
+                            <span>Espace parents et enseignants</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-7 login-right">
+                <h3><i class="fas fa-sign-in-alt me-2 text-primary"></i>Connexion</h3>
+                
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Nom d'utilisateur" required>
+                        <label for="username"><i class="fas fa-user me-2"></i>Nom d'utilisateur</label>
+                    </div>
+                    
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Mot de passe" required>
+                        <label for="password"><i class="fas fa-lock me-2"></i>Mot de passe</label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                        <label class="form-check-label" for="remember">
+                            Se souvenir de moi
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-login">
+                        <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                    </button>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="text-muted mb-2">Pas encore de compte ?</p>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>Créer un compte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

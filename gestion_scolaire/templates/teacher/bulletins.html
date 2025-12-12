@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Bulletins{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="fas fa-file-pdf me-2"></i>Génération des bulletins</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('teacher.dashboard') }}">Tableau de bord</a></li>
+            <li class="breadcrumb-item active">Bulletins</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- Sélection -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-filter me-2"></i>Paramètres de génération
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('teacher.bulletins') }}">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Classe <span class="text-danger">*</span></label>
+                    <select class="form-select" name="class_id" onchange="this.form.submit()">
+                        <option value="">-- Sélectionner une classe --</option>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}" {{ 'selected' if selected_class and selected_class.id == class.id }}>
+                            {{ class.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Période <span class="text-danger">*</span></label>
+                    <select class="form-select" name="period" onchange="this.form.submit()">
+                        <option value="1" {{ 'selected' if selected_period == 1 }}>1ère période</option>
+                        <option value="2" {{ 'selected' if selected_period == 2 }}>2ème période</option>
+                        <option value="3" {{ 'selected' if selected_period == 3 }}>3ème période</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Année scolaire</label>
+                    <input type="text" class="form-control" value="{{ academic_year or '2024-2025' }}" readonly>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_class %}
+<!-- Statut de la classe -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-primary h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h4>{{ students|length }}</h4>
+                <p class="text-muted mb-0">Élèves</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <h4>{{ students_with_grades }}</h4>
+                <p class="text-muted mb-0">Avec notes complètes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-warning h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                <h4>{{ students|length - students_with_grades }}</h4>
+                <p class="text-muted mb-0">Notes incomplètes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des élèves pour bulletin -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-list me-2"></i>Élèves de {{ selected_class.name }}</span>
+        {% if students %}
+        <button type="button" class="btn btn-primary" onclick="generateAllBulletins()">
+            <i class="fas fa-file-pdf me-2"></i>Générer tous les bulletins
+        </button>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                        </th>
+                        <th>#</th>
+                        <th>Élève</th>
+                        <th>Matricule</th>
+                        <th class="text-center">Statut notes</th>
+                        <th class="text-center">Moyenne</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    {% set student_grades = grades_status.get(student.id, {}) %}
+                    {% set has_complete = student_grades.get('complete', False) %}
+                    {% set average = student_grades.get('average', 0) %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="student-checkbox" value="{{ student.id }}">
+                        </td>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <strong>{{ student.full_name }}</strong>
+                        </td>
+                        <td>{{ student.matricule or '-' }}</td>
+                        <td class="text-center">
+                            {% if has_complete %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Complet</span>
+                            {% else %}
+                            <span class="badge bg-warning"><i class="fas fa-exclamation me-1"></i>Incomplet</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if average > 0 %}
+                            <span class="badge {{ 'bg-success' if average >= 10 else 'bg-danger' }}">
+                                {{ '%.2f'|format(average) }}/20
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('teacher.generate_bulletin', student_id=student.id, period=selected_period) }}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               target="_blank"
+                               title="Générer le bulletin">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                    onclick="previewGrades({{ student.id }})"
+                                    title="Aperçu des notes">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-3">
+            <button type="button" class="btn btn-outline-primary" onclick="generateSelectedBulletins()">
+                <i class="fas fa-file-pdf me-2"></i>Générer les bulletins sélectionnés
+            </button>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucun élève dans cette classe</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Instructions -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="fas fa-info-circle me-2"></i>Instructions
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-check-circle text-success me-2"></i>Avant de générer un bulletin</h6>
+                <ul>
+                    <li>Vérifiez que toutes les notes sont saisies pour la période</li>
+                    <li>Assurez-vous que la structure du bulletin est configurée</li>
+                    <li>Contrôlez les appréciations des matières</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-file-pdf text-primary me-2"></i>Contenu du bulletin</h6>
+                <ul>
+                    <li>Informations de l'élève et de la classe</li>
+                    <li>Notes par matière avec moyennes</li>
+                    <li>Moyenne générale et rang</li>
+                    <li>Appréciations du conseil de classe</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-hand-pointer fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Sélectionnez une classe</h5>
+        <p class="text-muted">Pour générer des bulletins, veuillez sélectionner une classe dans les filtres ci-dessus.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal aperçu notes -->
+<div class="modal fade" id="gradesPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-eye me-2"></i>Aperçu des notes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="gradesPreviewContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSelectAll(checkbox) {
+    document.querySelectorAll('.student-checkbox').forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+}
+
+function generateAllBulletins() {
+    const classId = {{ selected_class.id if selected_class else 'null' }};
+    const period = {{ selected_period }};
+    
+    if (confirm('Générer tous les bulletins de la classe ?')) {
+        window.open(`/teacher/bulletins/generate-all?class_id=${classId}&period=${period}`, '_blank');
+    }
+}
+
+function generateSelectedBulletins() {
+    const selected = [];
+    document.querySelectorAll('.student-checkbox:checked').forEach(cb => {
+        selected.push(cb.value);
+    });
+    
+    if (selected.length === 0) {
+        alert('Veuillez sélectionner au moins un élève');
+        return;
+    }
+    
+    const period = {{ selected_period }};
+    window.open(`/teacher/bulletins/generate-selected?students=${selected.join(',')}&period=${period}`, '_blank');
+}
+
+function previewGrades(studentId) {
+    const modal = new bootstrap.Modal(document.getElementById('gradesPreviewModal'));
+    const content = document.getElementById('gradesPreviewContent');
+    
+    content.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+    modal.show();
+    
+    fetch(`/api/student/${studentId}/grades?period={{ selected_period }}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let html = `<h6>${data.student_name}</h6><hr>`;
+                html += '<table class="table table-sm"><thead><tr><th>Matière</th><th>Moy. Cl.</th><th>Compo</th><th>Moyenne</th></tr></thead><tbody>';
+                
+                data.grades.forEach(grade => {
+                    html += `<tr>
+                        <td>${grade.subject}</td>
+                        <td>${grade.moy_cl || '-'}</td>
+                        <td>${grade.n_compo || '-'}</td>
+                        <td><strong>${grade.average || '-'}</strong></td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                html += `<div class="text-end"><strong>Moyenne générale: ${data.overall_average || '-'}/20</strong></div>`;
+                content.innerHTML = html;
+            } else {
+                content.innerHTML = '<div class="alert alert-warning">Aucune note trouvée</div>';
+            }
+        })
+        .catch(err => {
+            content.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement</div>';
+        });
+}
+</script>
+{% endblock %}

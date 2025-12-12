@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %} une matière{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-{% if action == 'edit' %}edit{% else %}plus{% endif %} me-2"></i>{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %} une matière</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Administration</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.subjects') }}">Matières</a></li>
+            <li class="breadcrumb-item active">{% if action == 'edit' %}Modifier{% else %}Ajouter{% endif %}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nom de la matière <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" value="{{ subject.name if subject else '' }}" required placeholder="Ex: Mathématiques">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="code" value="{{ subject.code if subject else '' }}" required placeholder="Ex: MATH" style="text-transform: uppercase;">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Coefficient par défaut</label>
+                            <input type="number" class="form-control" name="default_coef" value="{{ subject.default_coef if subject else 1 }}" min="1" max="10">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <select class="form-select" name="category">
+                            <option value="">-- Sélectionner --</option>
+                            <option value="Sciences" {% if subject and subject.category == 'Sciences' %}selected{% endif %}>Sciences</option>
+                            <option value="Lettres" {% if subject and subject.category == 'Lettres' %}selected{% endif %}>Lettres</option>
+                            <option value="Langues" {% if subject and subject.category == 'Langues' %}selected{% endif %}>Langues</option>
+                            <option value="Sciences humaines" {% if subject and subject.category == 'Sciences humaines' %}selected{% endif %}>Sciences humaines</option>
+                            <option value="Arts" {% if subject and subject.category == 'Arts' %}selected{% endif %}>Arts</option>
+                            <option value="Sport" {% if subject and subject.category == 'Sport' %}selected{% endif %}>Sport</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Description optionnelle...">{{ subject.description if subject else '' }}</textarea>
+                    </div>
+                    
+                    {% if action == 'edit' %}
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if subject and subject.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            Matière active
+                        </label>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{% if action == 'edit' %}Enregistrer{% else %}Créer{% endif %}
+                        </button>
+                        <a href="{{ url_for('admin.subjects') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

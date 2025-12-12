@@ -1,5 +1,20 @@
+# Application de Gestion Scolaire - Dépendances
+# Version 2.0
+
+# Framework Web
 Flask==2.3.3
-Flask-Login==0.6.3
-Flask-SQLAlchemy==3.0.5
 Werkzeug==2.3.7
-reportlab==3.6.13
+
+# Base de données
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+
+# Authentification
+Flask-Login==0.6.3
+
+# Génération PDF
+reportlab==4.0.6
+
+# Pour la production (optionnel)
+gunicorn==21.2.0
+psycopg2-binary==2.9.9  # PostgreSQL

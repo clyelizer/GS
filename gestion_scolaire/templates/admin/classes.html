@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des classes{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="fas fa-school me-2"></i>Classes</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Administration</a></li>
+                <li class="breadcrumb-item active">Classes</li>
+            </ol>
+        </nav>
+    </div>
+    <a href="{{ url_for('admin.add_class') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Ajouter
+    </a>
+</div>
+
+<div class="row">
+    {% for class in classes %}
+    <div class="col-md-6 col-xl-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chalkboard text-primary me-2"></i>{{ class.name }}
+                    </h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('admin.class_students', class_id=class.id) }}">
+                                <i class="fas fa-users me-2"></i>Voir les élèves
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.edit_class', class_id=class.id) }}">
+                                <i class="fas fa-edit me-2"></i>Modifier
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="{{ url_for('admin.delete_class', class_id=class.id) }}" method="POST" onsubmit="return confirm('Supprimer cette classe ?')">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-trash me-2"></i>Supprimer
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <span class="badge bg-primary me-2">
+                        <i class="fas fa-user-graduate me-1"></i>{{ class.student_count }} élèves
+                    </span>
+                    {% if class.level %}
+                    <span class="badge bg-secondary">{{ class.level }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if class.main_teacher %}
+                <p class="small text-muted mb-2">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>
+                    Prof. principal: {{ class.main_teacher.full_name }}
+                </p>
+                {% endif %}
+                
+                {% if class.description %}
+                <p class="small text-muted mb-0">{{ class.description[:100] }}{% if class.description|length > 100 %}...{% endif %}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{{ url_for('admin.class_students', class_id=class.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>Détails
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-school fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Aucune classe créée</p>
+                <a href="{{ url_for('admin.add_class') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Ajouter une classe
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

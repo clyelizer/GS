@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Modifier' if announcement else 'Nouvelle' }} annonce{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1>
+        <i class="fas fa-bullhorn me-2"></i>
+        {{ 'Modifier l\'annonce' if announcement else 'Nouvelle annonce' }}
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Administration</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.announcements') }}">Annonces</a></li>
+            <li class="breadcrumb-item active">{{ 'Modifier' if announcement else 'Nouvelle' }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-edit me-2"></i>Détails de l'annonce
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Titre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ announcement.title if announcement else '' }}" required
+                               placeholder="Titre de l'annonce">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Contenu <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="content" name="content" rows="8" required
+                                  placeholder="Contenu de l'annonce...">{{ announcement.content if announcement else '' }}</textarea>
+                        <small class="text-muted">HTML autorisé pour le formatage</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="target_role" class="form-label">Public cible <span class="text-danger">*</span></label>
+                            <select class="form-select" id="target_role" name="target_role" required>
+                                <option value="all" {{ 'selected' if announcement and announcement.target_role == 'all' else '' }}>
+                                    Tout le monde
+                                </option>
+                                <option value="student" {{ 'selected' if announcement and announcement.target_role == 'student' else '' }}>
+                                    Élèves uniquement
+                                </option>
+                                <option value="teacher" {{ 'selected' if announcement and announcement.target_role == 'teacher' else '' }}>
+                                    Enseignants uniquement
+                                </option>
+                                <option value="parent" {{ 'selected' if announcement and announcement.target_role == 'parent' else '' }}>
+                                    Parents uniquement
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Options</label>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                       {{ 'checked' if not announcement or announcement.is_active else '' }}>
+                                <label class="form-check-label" for="is_active">
+                                    <i class="fas fa-check-circle text-success me-1"></i>Annonce active
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="is_pinned" name="is_pinned"
+                                       {{ 'checked' if announcement and announcement.is_pinned else '' }}>
+                                <label class="form-check-label" for="is_pinned">
+                                    <i class="fas fa-thumbtack text-warning me-1"></i>Épingler l'annonce
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if announcement %}
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            Créée le {{ announcement.created_at.strftime('%d/%m/%Y à %H:%M') }}
+                            par {{ announcement.author.full_name if announcement.author else 'Admin' }}
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.announcements') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>{{ 'Enregistrer' if announcement else 'Créer l\'annonce' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Aperçu -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-eye me-2"></i>Aperçu de l'annonce
+            </div>
+            <div class="card-body">
+                <div id="preview-container">
+                    <h5 id="preview-title" class="card-title">Titre de l'annonce</h5>
+                    <hr>
+                    <div id="preview-content">Contenu de l'annonce...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('title');
+    const contentInput = document.getElementById('content');
+    const previewTitle = document.getElementById('preview-title');
+    const previewContent = document.getElementById('preview-content');
+
+    function updatePreview() {
+        previewTitle.textContent = titleInput.value || 'Titre de l\'annonce';
+        previewContent.innerHTML = contentInput.value || 'Contenu de l\'annonce...';
+    }
+
+    titleInput.addEventListener('input', updatePreview);
+    contentInput.addEventListener('input', updatePreview);
+    
+    // Initialiser l'aperçu
+    updatePreview();
+});
+</script>
+{% endblock %}
