@@ -11,6 +11,10 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # Codes d'inscription
+    TEACHER_CODE = os.environ.get('TEACHER_CODE') or 'PROF2025'
+    ADMIN_CODE = os.environ.get('ADMIN_CODE') or 'ADMIN2025'
+    
     # Configuration email (pour les notifications futures)
     MAIL_SERVER = os.environ.get('MAIL_SERVER')
     MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)

@@ -428,9 +428,6 @@
             <a href="{{ url_for('teacher.attendance') }}" class="nav-link {{ 'active' if 'teacher.attendance' in request.endpoint }}">
                 <i class="fas fa-clipboard-check"></i> Présences
             </a>
-            <a href="{{ url_for('teacher.bulletins') }}" class="nav-link {{ 'active' if 'teacher.bulletins' in request.endpoint }}">
-                <i class="fas fa-file-pdf"></i> Bulletins
-            </a>
             
             <!-- Menu Élève -->
             {% elif current_user.role == 'student' %}
