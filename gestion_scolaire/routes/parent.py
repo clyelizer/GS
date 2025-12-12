@@ -78,8 +78,8 @@ def dashboard():
     # Annonces
     announcements = Announcement.query.filter(
         Announcement.is_active == True,
-        (Announcement.target_role == 'all') | (Announcement.target_role == 'parent')
-    ).order_by(Announcement.is_pinned.desc(), Announcement.created_at.desc()).limit(5).all()
+        (Announcement.target_audience == 'all') | (Announcement.target_audience == 'parents')
+    ).order_by(Announcement.created_at.desc()).limit(5).all()
     
     # Messages non lus
     unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()

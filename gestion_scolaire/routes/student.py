@@ -93,8 +93,8 @@ def dashboard():
     # Annonces
     announcements = Announcement.query.filter(
         Announcement.is_active == True,
-        (Announcement.target_role == 'all') | (Announcement.target_role == 'student')
-    ).order_by(Announcement.is_pinned.desc(), Announcement.created_at.desc()).limit(5).all()
+        (Announcement.target_audience == 'all') | (Announcement.target_audience == 'students')
+    ).order_by(Announcement.created_at.desc()).limit(5).all()
     
     return render_template('student/dashboard.html',
                           recent_grades=recent_grades,

@@ -42,7 +42,7 @@ def dashboard():
         'total_subjects': Subject.query.count(),
         'total_grades': Grade.query.count(),
         'recent_users': User.query.order_by(User.created_at.desc()).limit(5).all(),
-        'recent_announcements': Announcement.query.order_by(Announcement.created_at.desc()).limit(5).all()
+        'recent_announcements': Announcement.query.filter_by(is_active=True).order_by(Announcement.created_at.desc()).limit(5).all()
     }
     return render_template('admin/dashboard.html', stats=stats)
 

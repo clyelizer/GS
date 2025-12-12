@@ -45,10 +45,11 @@ def dashboard():
     total_grades = Grade.query.count()
     subjects = Subject.query.filter_by(is_active=True).all()
     
-    # Annonces
-    announcements = Announcement.query.filter_by(is_active=True).order_by(
-        Announcement.created_at.desc()
-    ).limit(5).all()
+    # Annonces pour les enseignants
+    announcements = Announcement.query.filter(
+        Announcement.is_active == True,
+        (Announcement.target_audience == 'all') | (Announcement.target_audience == 'teachers')
+    ).order_by(Announcement.created_at.desc()).limit(5).all()
     
     return render_template('teacher/dashboard.html', 
                           classes=classes,

@@ -245,9 +245,6 @@
                 <div class="mb-3 pb-2 border-bottom">
                     <div class="d-flex justify-content-between">
                         <h6 class="mb-1">
-                            {% if announcement.is_pinned %}
-                            <i class="fas fa-thumbtack text-warning me-1"></i>
-                            {% endif %}
                             {{ announcement.title }}
                         </h6>
                         <small class="text-muted">{{ announcement.created_at.strftime('%d/%m') }}</small>
