@@ -143,22 +143,21 @@ def init_db(app=None):
             
             # Ajouter des notes complètes pour période 1
             notes_alice_p1 = [
-                ('Mathématiques', 5, 16, 18, 16.67),
-                ('Physique', 4, 15, 17, 16.33),
-                ('Chimie', 4, 14, 16, 15.33),
-                ('Philosophie', 3, 13, 15, 14.33),
-                ('Anglais', 3, 17, 18, 17.67),
-                ('SVT', 3, 15, 16, 15.67),
+                ('Mathématiques', 5, 16, 18),
+                ('Physique', 4, 15, 17),
+                ('Chimie', 4, 14, 16),
+                ('Philosophie', 3, 13, 15),
+                ('Anglais', 3, 17, 18),
+                ('SVT', 3, 15, 16),
             ]
             
-            for subject_name, coef, moy_cl, n_compo, average in notes_alice_p1:
+            for subject_name, coef, moy_cl, n_compo in notes_alice_p1:
                 grade = Grade(
                     student_id=student1.id,
                     subject_name=subject_name,
                     period='1',
                     moy_cl=moy_cl,
                     n_compo=n_compo,
-                    average=average,
                     coef=coef,
                     appreciation='Excellent travail'
                 )
@@ -184,22 +183,21 @@ def init_db(app=None):
             
             # Ajouter des notes complètes pour période 1
             notes_bob_p1 = [
-                ('Mathématiques', 5, 14, 15, 14.67),
-                ('Physique', 4, 13, 14, 13.67),
-                ('Chimie', 4, 12, 13, 12.67),
-                ('Philosophie', 3, 11, 12, 11.67),
-                ('Anglais', 3, 15, 16, 15.67),
-                ('SVT', 3, 13, 14, 13.67),
+                ('Mathématiques', 5, 14, 15),
+                ('Physique', 4, 13, 14),
+                ('Chimie', 4, 12, 13),
+                ('Philosophie', 3, 11, 12),
+                ('Anglais', 3, 15, 16),
+                ('SVT', 3, 13, 14),
             ]
             
-            for subject_name, coef, moy_cl, n_compo, average in notes_bob_p1:
+            for subject_name, coef, moy_cl, n_compo in notes_bob_p1:
                 grade = Grade(
                     student_id=student2.id,
                     subject_name=subject_name,
                     period='1',
                     moy_cl=moy_cl,
                     n_compo=n_compo,
-                    average=average,
                     coef=coef,
                     appreciation='Bon travail'
                 )
