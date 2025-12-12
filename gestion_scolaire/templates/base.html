@@ -415,9 +415,6 @@
             <a href="{{ url_for('admin.announcements') }}" class="nav-link {{ 'active' if 'admin.announcement' in request.endpoint }}">
                 <i class="fas fa-bullhorn"></i> Annonces
             </a>
-            <a href="{{ url_for('admin.academic_years') }}" class="nav-link {{ 'active' if 'admin.academic' in request.endpoint }}">
-                <i class="fas fa-calendar-alt"></i> Années scolaires
-            </a>
             
             <!-- Menu Enseignant -->
             {% elif current_user.role == 'teacher' %}
@@ -431,8 +428,8 @@
             <a href="{{ url_for('teacher.attendance') }}" class="nav-link {{ 'active' if 'teacher.attendance' in request.endpoint }}">
                 <i class="fas fa-clipboard-check"></i> Présences
             </a>
-            <a href="{{ url_for('teacher.classes') }}" class="nav-link {{ 'active' if 'teacher.class' in request.endpoint }}">
-                <i class="fas fa-users"></i> Mes classes
+            <a href="{{ url_for('teacher.bulletins') }}" class="nav-link {{ 'active' if 'teacher.bulletins' in request.endpoint }}">
+                <i class="fas fa-file-pdf"></i> Bulletins
             </a>
             
             <!-- Menu Élève -->
