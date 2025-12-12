@@ -13,7 +13,7 @@ db = SQLAlchemy()
 def init_db(app=None):
     """Initialise la base de données avec les tables et données par défaut"""
     if app is None:
-        from gestion_scolaire.app import create_app
+        from gestion_scolaire import create_app
         app = create_app()
     
     with app.app_context():
