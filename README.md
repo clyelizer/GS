@@ -189,3 +189,4 @@ L'application utilise SQLite par défaut. Les modèles principaux :
 
 **© 2024 Lycée Michel ALLAIRE - Système de Gestion Scolaire**
 # School-manager
+# School-manager
