@@ -36,18 +36,30 @@ def init_db(app=None):
             db.session.add(admin)
             print("✅ Compte admin créé: admin / admin123")
         
-        # Compte enseignant
+        # Comptes enseignants
         if not User.query.filter_by(username='teacher1').first():
-            teacher = User(
+            teacher1 = User(
                 username='teacher1',
-                email='teacher@ecole.com',
+                email='teacher1@ecole.com',
                 password_hash=generate_password_hash('teacher123'),
                 role='teacher',
                 first_name='Jean',
                 last_name='Professeur'
             )
-            db.session.add(teacher)
+            db.session.add(teacher1)
             print("✅ Compte enseignant créé: teacher1 / teacher123")
+        
+        if not User.query.filter_by(username='teacher2').first():
+            teacher2 = User(
+                username='teacher2',
+                email='teacher2@ecole.com',
+                password_hash=generate_password_hash('teacher123'),
+                role='teacher',
+                first_name='Marie',
+                last_name='Dupont'
+            )
+            db.session.add(teacher2)
+            print("✅ Compte enseignant créé: teacher2 / teacher123")
         
         # Créer les classes par défaut
         default_classes = [
@@ -106,6 +118,97 @@ def init_db(app=None):
                         subjects_part2=struct_data['subjects_part2']
                     )
                     db.session.add(new_struct)
+        
+        # Commit les classes et matières d'abord
+        db.session.commit()
+        
+        # Créer 2 étudiants avec des notes complètes pour bulletins
+        from gestion_scolaire.models import Grade
+        
+        # Récupérer la classe 12e EXP
+        classe_12exp = SchoolClass.query.filter_by(name='12e EXP').first()
+        
+        # Étudiant 1 - Alice Martin
+        if not User.query.filter_by(username='student1').first():
+            student1 = User(
+                username='student1',
+                email='alice.martin@ecole.com',
+                password_hash=generate_password_hash('student123'),
+                role='student',
+                first_name='Alice',
+                last_name='Martin',
+                current_class_id=classe_12exp.id if classe_12exp else None,
+                matricule='2024001',
+                date_of_birth=datetime(2007, 3, 15).date()
+            )
+            db.session.add(student1)
+            db.session.flush()  # Pour obtenir l'ID
+            
+            # Ajouter des notes complètes pour période 1
+            notes_alice_p1 = [
+                ('Mathématiques', 5, 16, 18, 16.67),
+                ('Physique', 4, 15, 17, 16.33),
+                ('Chimie', 4, 14, 16, 15.33),
+                ('Philosophie', 3, 13, 15, 14.33),
+                ('Anglais', 3, 17, 18, 17.67),
+                ('SVT', 3, 15, 16, 15.67),
+            ]
+            
+            for subject_name, coef, moy_cl, n_compo, average in notes_alice_p1:
+                grade = Grade(
+                    student_id=student1.id,
+                    subject_name=subject_name,
+                    period='1',
+                    moy_cl=moy_cl,
+                    n_compo=n_compo,
+                    average=average,
+                    coef=coef,
+                    appreciation='Excellent travail'
+                )
+                db.session.add(grade)
+            
+            print("✅ Étudiant créé: student1 / student123 (Alice Martin - 12e EXP)")
+        
+        # Étudiant 2 - Bob Durand
+        if not User.query.filter_by(username='student2').first():
+            student2 = User(
+                username='student2',
+                email='bob.durand@ecole.com',
+                password_hash=generate_password_hash('student123'),
+                role='student',
+                first_name='Bob',
+                last_name='Durand',
+                current_class_id=classe_12exp.id if classe_12exp else None,
+                matricule='2024002',
+                date_of_birth=datetime(2007, 8, 22).date()
+            )
+            db.session.add(student2)
+            db.session.flush()  # Pour obtenir l'ID
+            
+            # Ajouter des notes complètes pour période 1
+            notes_bob_p1 = [
+                ('Mathématiques', 5, 14, 15, 14.67),
+                ('Physique', 4, 13, 14, 13.67),
+                ('Chimie', 4, 12, 13, 12.67),
+                ('Philosophie', 3, 11, 12, 11.67),
+                ('Anglais', 3, 15, 16, 15.67),
+                ('SVT', 3, 13, 14, 13.67),
+            ]
+            
+            for subject_name, coef, moy_cl, n_compo, average in notes_bob_p1:
+                grade = Grade(
+                    student_id=student2.id,
+                    subject_name=subject_name,
+                    period='1',
+                    moy_cl=moy_cl,
+                    n_compo=n_compo,
+                    average=average,
+                    coef=coef,
+                    appreciation='Bon travail'
+                )
+                db.session.add(grade)
+            
+            print("✅ Étudiant créé: student2 / student123 (Bob Durand - 12e EXP)")
         
         # Commit toutes les données
         db.session.commit()
